@@ -1,12 +1,12 @@
-
 import cv2
 import numpy as np
 import math
 import os
 
-def generate_fixed_labels_images(num_images, image_size=(256, 256), square_size=50, fixed_labels=[20, 40, 60, 80, 100]):
+def generate_noisy_images(num_images, image_size=(256, 256), square_size=50, fixed_labels=[20, 40, 60, 80, 100]):
     """
     Generates a set of images with a square and a circle, ensuring they do not overlap, with fixed circle sizes (labels).
+    The images include random noise and blurred lines.
 
     Args:
     - num_images: Number of images to generate.
@@ -24,6 +24,10 @@ def generate_fixed_labels_images(num_images, image_size=(256, 256), square_size=
         while True:
             # Create a blank image
             img = np.zeros((image_size[1], image_size[0], 3), dtype=np.uint8)
+
+            # Add random noise to the background
+            noise = np.random.randint(0, 256, (image_size[1], image_size[0], 3), dtype=np.uint8)
+            img = cv2.addWeighted(img, 0.5, noise, 0.5, 0)
 
             # Set circle properties (selecting randomly from the fixed labels)
             circle_radius = np.random.choice(fixed_labels)
@@ -46,6 +50,9 @@ def generate_fixed_labels_images(num_images, image_size=(256, 256), square_size=
                       (square_center[0] + square_size // 2, square_center[1] + square_size // 2), (255, 255, 255), -1)
         cv2.circle(img, circle_center, circle_radius, (255, 255, 255), -1)
 
+        # Apply blurring to create blurred lines
+        img = cv2.GaussianBlur(img, (5, 5), cv2.BORDER_DEFAULT)
+
         # Random rotation
         angle = np.random.randint(0, 360)
         M = cv2.getRotationMatrix2D((image_size[0] / 2, image_size[1] / 2), angle, 1)
@@ -57,17 +64,12 @@ def generate_fixed_labels_images(num_images, image_size=(256, 256), square_size=
 
     return images, labels
 
-# Generate 100 images with five different labels
-output_dir = 'generated_images_5_labels'
-os.makedirs(output_dir, exist_ok=True)  # Ensure the output directory exists
+# Generate noisy images
+output_dir = 'noisy_generated_images'
+os.makedirs(output_dir, exist_ok=True)
 
-images_fixed_labels, labels_fixed_labels = generate_fixed_labels_images(100)
+noisy_images, noisy_labels = generate_noisy_images(100)
 
-for i, (img, label) in enumerate(zip(images_fixed_labels, labels_fixed_labels)):
-    # Construct filename
-    filename = os.path.join(output_dir, f'image_{i+1}_label_{label}.png')
-    # Save image
+for i, (img, label) in enumerate(zip(noisy_images, noisy_labels)):
+    filename = os.path.join(output_dir, f'noisy_image_{i+1}_label_{label}.png')
     cv2.imwrite(filename, img)
-
-# Return the count of unique labels to confirm
-len(set(labels_fixed_labels)), output_dir
