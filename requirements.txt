@@ -5,3 +5,4 @@ opencv-python
 matplotlib
 scikit-learn
 torchsummary # Optional, include if you need model summaries like in Keras.
+notebook # Optional, include if you want to run the notebook locally.
