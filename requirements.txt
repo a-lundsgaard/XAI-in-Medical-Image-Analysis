@@ -1,0 +1,7 @@
+numpy
+torch
+torchvision
+opencv-python
+matplotlib
+scikit-learn
+torchsummary # Optional, include if you need model summaries like in Keras.
