@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch.autograd import Variable
 import numpy as np
-from models.baseModels.resnet_regression import ResNetModel
+from src.models.baseModels.resnet_regression import ResNetModel
 
 class XAIResNet:
     def __init__(self, modelWrapper: ResNetModel, device):
