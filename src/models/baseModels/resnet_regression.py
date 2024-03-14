@@ -93,9 +93,9 @@ class ResNetModel:
         self.model.eval()
         correct = 0
         total = 0
-        with torch.no_grad():
+        with torch.no_gratod():
             for images, labels in self.test_loader:
-                images, labels = images.to(self.device), labels.to(self.device)
+                images, labels = images.to(self.device), labels.to(self.device) # Move  the device
                 outputs = self.model(images)
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
