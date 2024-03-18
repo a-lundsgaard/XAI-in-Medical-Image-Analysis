@@ -9,10 +9,9 @@ from torch.utils.data import DataLoader, TensorDataset
 from torchvision import models
 
 class ResNetModel:
-    def __init__(self, data_dir = '../../artificial_data/noisy_generated_images', image_size=(256, 256), num_classes=5, batch_size=32, num_epochs=5):
+    def __init__(self, data_dir = '../../artificial_data/noisy_generated_images', image_size=(256, 256), batch_size=32, num_epochs=5):
         self.data_dir = data_dir
         self.image_size = image_size
-        self.num_classes = num_classes
         self.batch_size = batch_size
         self.num_epochs = num_epochs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -22,12 +21,12 @@ class ResNetModel:
         
         # Initialize the model
         self.model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
-        num_ftrs = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_ftrs, num_classes)
-        self.model.to(self.device)
+        num_features = self.model.fc.in_features
+        self.model.fc = nn.Linear(num_features, 1) # Output layer for regression.
+        self.model.to(self.device) 
 
         # Loss and optimizer
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
     def load_data(self):
@@ -43,11 +42,6 @@ class ResNetModel:
                 label = int(filename.split('_')[-1].split('.')[0])
                 images.append(img)
                 labels.append(label)
-
-        # Adjust labels
-        label_set = set(labels)
-        label_map = {val: i for i, val in enumerate(sorted(label_set))}
-        labels = [label_map[val] for val in labels]
 
         # Convert to tensors and create dataloaders
         images = np.array(images).transpose((0, 3, 1, 2)) / 255.0
@@ -82,25 +76,22 @@ class ResNetModel:
             for images, labels in self.train_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad() # Zero the parameter gradients
-                outputs = self.model(images)
-                loss = self.criterion(outputs, labels)
-                loss.backward()
+                outputs = self.model(images).flatten()
+                loss = self.criterion(outputs, labels.float()) 
+                loss.backward() # TODO: Convert labels to float.
                 self.optimizer.step()
                 running_loss += loss.item()
             print(f"Epoch {epoch+1}/{self.num_epochs}, Loss: {running_loss/len(self.train_loader)}")
 
     def evaluate(self):
         self.model.eval()
-        correct = 0
-        total = 0
         with torch.no_grad():
             for images, labels in self.test_loader:
-                images, labels = images.to(self.device), labels.to(self.device)
+                images, labels = images.to(self.device), labels.to(self.device) # Move  the device
                 outputs = self.model(images)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-        print(f'Accuracy of the network on the test images: {100 * correct / total}%')
+                predicted = outputs.flatten() 
+                loss = self.criterion(predicted, labels.float())
+                print(f'Loss of the network on the test images: {loss}')
 
 
 # Example usage

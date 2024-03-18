@@ -24,7 +24,7 @@ class XAIResNet:
         self.modelWrapper.model.zero_grad()
         
         # Target for backprop
-        target = output[0][input_label]
+        target = output[0]
         
         # Backward pass
         target.backward()
