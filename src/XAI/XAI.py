@@ -9,16 +9,19 @@ class XAIResNet:
         self.modelWrapper = modelWrapper
         self.device = device
 
-    def get_saliency_maps(self, image_count):
+    def get_saliency_maps(self, image_count = 1):
         """
         Generate saliency maps for a set of images.
         Args:
             image_count (int): The number of images for which to generate saliency maps.
         """
-        for i in range(image_count = len(self.modelWrapper.testData)):
+        # make ternary operator
+        max_image_count = self.modelWrapper.testData.tensors[0].shape[0]
+        count = image_count if image_count <= max_image_count else self.modelWrapper.testData.tensors[0].shape[0]
+
+        for i in range(count):
             input_image, input_label = self.modelWrapper.get_single_test_image(index=i)
-            if input_image is not None:
-                self.generate_saliency_map(input_image, input_label)
+            self.generate_saliency_map(input_image, input_label)
     
     def generate_saliency_map(self, input_image, input_label):
         """
