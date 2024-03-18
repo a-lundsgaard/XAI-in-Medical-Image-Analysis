@@ -74,11 +74,9 @@ class ResNetModel:
 
 
     def get_single_test_image(self, index=0):
-        # Assuming self.testData is a TensorDataset
         return self.get_single_image(self.testData, index)
     
     def get_single_train_image(self, index=0):
-        # Assuming self.testData is a TensorDataset
         return self.get_single_image(self.trainingData, index)
 
 
