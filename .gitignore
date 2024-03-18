@@ -1,10 +1,5 @@
 __pycache__/
-<<<<<<< HEAD
 # Ignore datasets
 datasets/
-=======
-# ignore datasets
-datasets/
-datasets
-/datasets/
->>>>>>> edd7e816015fae60497e1396cf0f537347835836
+# ignore .pyc files
+*.pyc
