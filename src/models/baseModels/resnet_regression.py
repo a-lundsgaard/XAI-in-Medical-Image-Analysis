@@ -58,14 +58,15 @@ class ResNetModel:
         # Assuming self.testData is a TensorDataset
         if self.testData is not None:
             # Fetch the image and label tensors
-            img_tensor, label_tensor = self.testData[index]
-            # Add a batch dimension, convert to float, and move to the correct device
-            img_tensor = img_tensor.unsqueeze(0).float().to(self.device)
-            # Move the label to the correct device
-            label_tensor = label_tensor.to(self.device)
-            return img_tensor, label_tensor.item()  # Return the image tensor and the label as an integer
+            if index < len(self.testData):
+                img_tensor, label_tensor = self.testData[index]
+                # Add a batch dimension, convert to float, and move to the correct device
+                img_tensor = img_tensor.unsqueeze(0).float().to(self.device)
+                # Move the label to the correct device
+                label_tensor = label_tensor.to(self.device)
+                return img_tensor, label_tensor.item()  # Return the image tensor and the label as an integer
         else:
-            print("Test data not loaded.")
+            print(f"Test data not loaded")
             return None, None
 
 

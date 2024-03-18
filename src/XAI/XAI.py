@@ -15,7 +15,7 @@ class XAIResNet:
         Args:
             image_count (int): The number of images for which to generate saliency maps.
         """
-        for i in range(image_count):
+        for i in range(image_count = len(self.modelWrapper.testData)):
             input_image, input_label = self.modelWrapper.get_single_test_image(index=i)
             if input_image is not None:
                 self.generate_saliency_map(input_image, input_label)
