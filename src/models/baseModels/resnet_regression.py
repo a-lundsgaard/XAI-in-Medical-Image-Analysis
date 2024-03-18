@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from torchvision import models
 
 class ResNetModel:
-    def __init__(self, data_dir = '../../artificial_data/noisy_generated_images', image_size=(256, 256), num_classes=5, batch_size=32, num_epochs=5):
+    def __init__(self, data_dir = '../../artificial_data/noisy_generated_images', image_size=(256, 256), batch_size=32, num_epochs=5):
         self.data_dir = data_dir
         self.image_size = image_size
         self.batch_size = batch_size
@@ -89,8 +89,9 @@ class ResNetModel:
             for images, labels in self.test_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 outputs = self.model(images)
-                _, predicted = outputs.data # TODO: fixx evaluation.
-
+                predicted = outputs.flatten() 
+                loss = self.criterion(predicted, labels.float())
+                print(f'Loss of the network on the test images: {loss}')
 
 
 # Example usage
