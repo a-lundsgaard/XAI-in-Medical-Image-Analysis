@@ -87,7 +87,7 @@ class ResNetModel:
         self.model.eval()
         with torch.no_grad():
             for images, labels in self.test_loader:
-                images, labels = images.to(self.device), labels.to(self.device)
+                images, labels = images.to(self.device), labels.to(self.device) # Move  the device
                 outputs = self.model(images)
                 predicted = outputs.flatten() 
                 loss = self.criterion(predicted, labels.float())
