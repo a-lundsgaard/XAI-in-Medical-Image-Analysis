@@ -4,7 +4,7 @@ import os
 class GenerateImages:
     def __init__(self, generator: ImageGenerator):
         self.generator = generator
-        self.output_dir = os.path.abspath("../../datasets/artificial_data/")        
+        self.output_dir = os.path.abspath("datasets/artificial_data/")        
         self.suffix = "_images"
 
     def generate_path(self):
