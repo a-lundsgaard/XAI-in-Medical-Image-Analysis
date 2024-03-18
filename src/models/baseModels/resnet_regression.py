@@ -17,6 +17,7 @@ class ResNetModel:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # include the data in the model 
         self.testData = None
+        self.trainingData = None
 
         
         # Initialize the model
@@ -51,23 +52,34 @@ class ResNetModel:
         train_dataset = TensorDataset(torch.tensor(X_train, dtype=torch.float), torch.tensor(y_train, dtype=torch.long))
         test_dataset = TensorDataset(torch.tensor(X_test, dtype=torch.float), torch.tensor(y_test, dtype=torch.long))
         self.testData = test_dataset
+        self.trainingData = train_dataset
         self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False)
 
-    def get_single_test_image(self, index=0):
+
+    def get_single_image(self, data: TensorDataset, index=0):
         # Assuming self.testData is a TensorDataset
-        if self.testData is not None:
+        if data is not None:
             # Fetch the image and label tensors
-            if index < len(self.testData):
-                img_tensor, label_tensor = self.testData[index]
+            if index < len(data):
+                img_tensor, label_tensor = data[index]
                 # Add a batch dimension, convert to float, and move to the correct device
                 img_tensor = img_tensor.unsqueeze(0).float().to(self.device)
                 # Move the label to the correct device
                 label_tensor = label_tensor.to(self.device)
-                return img_tensor, label_tensor.item()  # Return the image tensor and the label as an integer
+                return img_tensor, label_tensor.item()
         else:
-            print(f"Test data not loaded")
+            print(f"Data is not loaded")
             return None, None
+
+
+    def get_single_test_image(self, index=0):
+        # Assuming self.testData is a TensorDataset
+        return self.get_single_image(self.testData, index)
+    
+    def get_single_train_image(self, index=0):
+        # Assuming self.testData is a TensorDataset
+        return self.get_single_image(self.trainingData, index)
 
 
     def train(self):
