@@ -10,10 +10,10 @@ class SimpleNoisyImageGenerator(ImageGenerator):
     Generates a set of noisy images with a square and a circle, ensuring they do not overlap,
     with fixed circle sizes (labels).
     """
-    def __init__(self, num_images, image_size=(256, 256), square_size=50, fixed_labels=[20, 40, 60, 80, 100]):
+    def __init__(self, num_images, image_size=(256, 256), square_size=50):
         super().__init__(num_images, image_size)
         self.square_size = square_size
-        self.fixed_labels = fixed_labels
+        # self.fixed_labels = fixed_labels
 
     # def get_model_name(self):
     #     return self.__class__.__name__

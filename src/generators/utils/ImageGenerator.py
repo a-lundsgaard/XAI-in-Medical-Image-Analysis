@@ -9,8 +9,9 @@ class ImageGenerator(ABC):
     def __init__(self, num_images, image_size):
         self.num_images = num_images
         self.image_size = image_size
+        self.fixed_labels = [20, 40, 60, 80, 100]
         self.images = []
-        self.labels = [20, 40, 60, 80, 100]
+        self.labels = []
 
     @abstractmethod
     def generate_images(self):
@@ -32,6 +33,7 @@ class ImageGenerator(ABC):
         Args:
         - output_dir: Directory where the images will be saved.
         """
+        print(f"Saving images {self.labels}")
         os.makedirs(output_dir, exist_ok=True)
         for i, (img, label) in enumerate(zip(self.images, self.labels)):
             filename = os.path.join(output_dir, f'image_{i + 1}_label_{label}.png')

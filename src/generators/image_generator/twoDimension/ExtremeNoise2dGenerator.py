@@ -8,11 +8,10 @@ class ExtremeNoise2dGenerator(ImageGenerator):
     Generates a set of extremely noisy images with varying squares and fixed-size circles,
     ensuring they do not overlap, with variable grayscale colors, blending into the extremely noisy background.
     """
-    def __init__(self, num_images, image_size=(256, 256), square_min_size=20, square_max_size=100, fixed_circle_sizes=[20, 40, 60, 80, 100], blur_intensity=(25, 25)):
+    def __init__(self, num_images, image_size=(256, 256), square_min_size=20, square_max_size=100, blur_intensity=(25, 25)):
         super().__init__(num_images, image_size)
         self.square_min_size = square_min_size
         self.square_max_size = square_max_size
-        self.fixed_circle_sizes = fixed_circle_sizes
         self.blur_intensity = blur_intensity
 
     def add_extreme_noise(self, image):
@@ -28,7 +27,8 @@ class ExtremeNoise2dGenerator(ImageGenerator):
 
                 # Randomize square properties and choose fixed circle size
                 square_size = np.random.randint(self.square_min_size, self.square_max_size)
-                circle_radius = np.random.choice(self.fixed_circle_sizes)
+                circle_radius = np.random.choice(self.fixed_labels)
+                print(f"circle_radius: {circle_radius}")
                 shape_color = np.random.randint(50, 206)  # Grayscale color to blend with background
 
                 # Random positions ensuring they do not exceed image boundaries
