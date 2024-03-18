@@ -47,11 +47,15 @@ class ResNetModel:
         images = np.array(images).transpose((0, 3, 1, 2)) / 255.0
         labels = np.array(labels)
         X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42) 
 
-        train_dataset = TensorDataset(torch.tensor(X_train, dtype=torch.float), torch.tensor(y_train, dtype=torch.long))
-        test_dataset = TensorDataset(torch.tensor(X_test, dtype=torch.float), torch.tensor(y_test, dtype=torch.long))
+        train_dataset = TensorDataset(torch.tensor(X_train, dtype=torch.float), torch.tensor(y_train, dtype=torch.float))
+        val_dataset = TensorDataset(torch.tensor(X_val, dtype=torch.float), torch.tensor(y_val, dtype=torch.float))
+        test_dataset = TensorDataset(torch.tensor(X_test, dtype=torch.float), torch.tensor(y_test, dtype=torch.float))
+
         self.testData = test_dataset
         self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
+        self.val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False)
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False)
 
     def get_single_test_image(self, index=0):
@@ -69,30 +73,47 @@ class ResNetModel:
             print(f"Test data not loaded")
             return None, None
 
+    def validation_loss(self):
+        self.model.eval()
+        with torch.no_grad():
+            for images, labels in self.val_loader:
+                images, labels = images.to(self.device), labels.to(self.device)
+                outputs = self.model(images).flatten()
+                loss = self.criterion(outputs, labels.float()) 
+
+                return loss.item()
 
     def train(self):
         for epoch in range(self.num_epochs):
             self.model.train()
-            running_loss = 0.0
+            running_train_loss = 0.0
+            running_val_loss = 0.0
             for images, labels in self.train_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad() # Zero the parameter gradients
                 outputs = self.model(images).flatten()
                 loss = self.criterion(outputs, labels.float()) 
-                loss.backward() # TODO: Convert labels to float.
+                loss.backward() 
                 self.optimizer.step()
-                running_loss += loss.item()
-            print(f"Epoch {epoch+1}/{self.num_epochs}, Loss: {running_loss/len(self.train_loader)}")
+
+                running_train_loss += loss.item()
+                running_val_loss += self.validation_loss()
+            print(f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_train_loss/len(self.train_loader)}, Val Loss: {running_val_loss/len(self.val_loader)}")
+
 
     def evaluate(self):
         self.model.eval()
+        running_loss = 0.0
         with torch.no_grad():
             for images, labels in self.test_loader:
                 images, labels = images.to(self.device), labels.to(self.device) # Move  the device
                 outputs = self.model(images)
                 predicted = outputs.flatten() 
+
                 loss = self.criterion(predicted, labels.float())
-                print(f'Loss of the network on the test images: {loss}')
+                running_loss += loss.item()
+        
+        print(f'Loss of the network on the test images: {running_loss}')
 
 
 # Example usage
