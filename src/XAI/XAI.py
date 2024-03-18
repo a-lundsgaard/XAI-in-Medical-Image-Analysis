@@ -8,6 +8,17 @@ class XAIResNet:
     def __init__(self, modelWrapper: ResNetModel, device):
         self.modelWrapper = modelWrapper
         self.device = device
+
+    def get_saliency_maps(self, image_count):
+        """
+        Generate saliency maps for a set of images.
+        Args:
+            image_count (int): The number of images for which to generate saliency maps.
+        """
+        for i in range(image_count):
+            input_image, input_label = self.modelWrapper.get_single_test_image(index=i)
+            if input_image is not None:
+                self.generate_saliency_map(input_image, input_label)
     
     def generate_saliency_map(self, input_image, input_label):
         """
