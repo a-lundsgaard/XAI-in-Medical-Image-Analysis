@@ -3,6 +3,9 @@ import torch
 from torch.autograd import Variable
 import numpy as np
 from src.models.baseModels.resnet_regression import ResNetModel
+from torch.utils.data import DataLoader, TensorDataset
+from torch import Tensor
+
 
 class XAIResNet:
     def __init__(self, modelWrapper: ResNetModel, device):
@@ -23,7 +26,7 @@ class XAIResNet:
             input_image, input_label = self.modelWrapper.get_single_test_image(index=i)
             self.generate_saliency_map(input_image, input_label)
     
-    def generate_saliency_map(self, input_image, input_label):
+    def generate_saliency_map(self, input_image: Tensor, input_label):
         """
         Generate a saliency map for a given input image and label.
         Args:
@@ -33,7 +36,7 @@ class XAIResNet:
         input_image = input_image.to(self.device).requires_grad_(True)
         
         # Forward pass
-        output = self.modelWrapper.model(input_image)  # input_image should already have batch dimension
+        output: Tensor = self.modelWrapper.model(input_image)  # input_image should already have batch dimension
 
         self.modelWrapper.model.zero_grad()
         
