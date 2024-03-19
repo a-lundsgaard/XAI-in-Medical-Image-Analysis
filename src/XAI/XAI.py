@@ -3,7 +3,6 @@ import torch
 from torch.autograd import Variable
 import numpy as np
 from src.models.baseModels.resnet_regression import ResNetModel
-from torch.utils.data import DataLoader, TensorDataset
 from torch import Tensor
 
 
@@ -24,9 +23,9 @@ class XAIResNet:
 
         for i in range(count):
             input_image, input_label = self.modelWrapper.get_single_test_image(index=i)
-            self.generate_saliency_map(input_image, input_label)
+            self.__generate_saliency_map(input_image, input_label)
     
-    def generate_saliency_map(self, input_image: Tensor, input_label):
+    def __generate_saliency_map(self, input_image: Tensor, input_label):
         """
         Generate a saliency map for a given input image and label.
         Args:
@@ -59,13 +58,16 @@ class XAIResNet:
         plt.figure(figsize=(10, 5))  # Set figure size
 
         # Plot original image
-        plt.subplot(1, 2, 1)  # 1 row, 2 columns, first subplot
-        plt.imshow(original_image, cmap='gray')  # You might change 'gray' to 'hot' or another colormap if your image is not grayscale
+        n_rows = 1
+        n_cols = 2
+
+        plt.subplot(n_rows, n_cols, 1)  # first subplot
+        plt.imshow(original_image, cmap='gray') 
         plt.title("Original Image")
         plt.axis('off')
 
         # Plot saliency map
-        plt.subplot(1, 2, 2)  # 1 row, 2 columns, second subplot
+        plt.subplot(n_rows, n_cols, 2)  # second subplot
         plt.imshow(saliency.cpu(), cmap='hot')
         plt.title(f"Saliency Map (Label: {input_label})")
         plt.axis('off')
