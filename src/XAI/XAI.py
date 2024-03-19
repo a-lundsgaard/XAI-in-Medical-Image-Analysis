@@ -24,9 +24,9 @@ class XAIResNet:
 
         for i in range(count):
             input_image, input_label = self.modelWrapper.get_single_test_image(index=i)
-            self.generate_saliency_map(input_image, input_label)
+            self.__generate_saliency_map(input_image, input_label)
     
-    def generate_saliency_map(self, input_image: Tensor, input_label):
+    def __generate_saliency_map(self, input_image: Tensor, input_label):
         """
         Generate a saliency map for a given input image and label.
         Args:
