@@ -9,20 +9,26 @@ from torch.utils.data import DataLoader, TensorDataset
 from torchvision import models
 
 class ResNetModel:
-    def __init__(self, data_dir='../../artificial_data/noisy_generated_images', image_size=(256, 256), batch_size=32, num_epochs=5):
+    def __init__(self, data_dir = '../../artificial_data/noisy_generated_images', image_size=(256, 256), batch_size=32, num_epochs=5, depth=18):
         self.data_dir = data_dir
         self.image_size = image_size
         self.batch_size = batch_size
         self.num_epochs = num_epochs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Initialize the model
-        self.model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        if depth == 18:
+            self.model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        elif depth == 34:
+            self.model = models.resnet34(weights=models.ResNet34_Weights.DEFAULT)
+        elif depth == 50:
+            self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+
         # Modify the first convolutional layer to accept 1-channel input.
         self.model.conv1 = nn.Conv2d(1, self.model.conv1.out_channels,
                                      kernel_size=self.model.conv1.kernel_size,
                                      stride=self.model.conv1.stride,
                                      padding=self.model.conv1.padding, bias=False)
+            
         num_features = self.model.fc.in_features
         self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
         self.model.to(self.device)
@@ -93,10 +99,13 @@ class ResNetModel:
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False)
 
     def train(self):
+        early_stopping = EarlyStopping(tolerance=0, min_delta=0)
+        epoch_val_losses = []
         for epoch in range(self.num_epochs):
             self.model.train()
             running_train_loss = 0.0
             running_val_loss = 0.0
+            
             for images, labels in self.train_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
@@ -106,17 +115,19 @@ class ResNetModel:
                 self.optimizer.step()
 
                 running_train_loss += loss.item()
+                running_val_loss += self.validation_loss()
+            
+            print(f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_train_loss/len(self.train_loader)}, Val Loss: {running_val_loss/len(self.val_loader)}")
 
-            # Validation loss
-            self.model.eval()
-            with torch.no_grad():
-                for images, labels in self.val_loader:
-                    images, labels = images.to(self.device), labels.to(self.device)
-                    outputs = self.model(images).flatten()
-                    val_loss = self.criterion(outputs, labels)
-                    running_val_loss += val_loss.item()
+            epoch_val_losses.append(running_val_loss/len(self.val_loader))
+                            
+            # Early stopping
+            if epoch > 2:
+                early_stopping(epoch_val_losses)
+                if early_stopping.early_stop:
+                    print("Early stopped at epoch:", epoch + 1)
+                    break
 
-            print(f"Epoch {epoch + 1}/{self.num_epochs}, Train Loss: {running_train_loss / len(self.train_loader)}, Val Loss: {running_val_loss / len(self.val_loader)}")
 
     def evaluate(self):
         self.model.eval()
@@ -130,3 +141,25 @@ class ResNetModel:
                 running_loss += loss.item()
 
         print(f'Loss of the network on the test images: {running_loss / len(self.test_loader)}')
+
+class EarlyStopping:
+    def __init__(self, tolerance, min_delta):
+
+        self.tolerance = tolerance
+        self.min_delta = min_delta
+        self.counter = 0
+        self.early_stop = False
+
+    def __call__(self, epoch_val_losses):
+        if (epoch_val_losses[-1] - epoch_val_losses[-2]) > self.min_delta:
+            self.counter +=1
+            if self.counter >= self.tolerance:  
+                self.early_stop = True
+
+
+# Example usage
+# data_dir = '../../artificial_data/noisy_generated_images'
+# model = ResNetModel()
+# model.load_data()
+# model.train()
+# model.evaluate()

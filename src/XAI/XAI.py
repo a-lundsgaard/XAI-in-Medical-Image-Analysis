@@ -60,9 +60,11 @@ class XAIResNet:
         # make the title with the predicted label
         plt.title(f"Original Image (Label: {input_label})")
         plt.axis('off')
-
+        
+        n_rows = 1
+        n_cols = 2
         # Plot saliency map
-        plt.subplot(1, 2, 2)  # 1 row, 2 columns, second subplot
+        plt.subplot(n_rows, n_cols, 2)  # second subplot
         plt.imshow(saliency.cpu(), cmap='hot')
         plt.title(f"Saliency Map (Prediction: {round(target.item(), 2)})")
         plt.axis('off')
