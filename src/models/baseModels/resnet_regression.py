@@ -128,6 +128,14 @@ class ResNetModel:
                     print("Early stopped at epoch:", epoch + 1)
                     break
 
+    def validation_loss(self):
+        self.model.eval()
+        with torch.no_grad():
+            for images, labels in self.val_loader:
+                images, labels = images.to(self.device), labels.to(self.device)
+                outputs = self.model(images).flatten()
+                loss = self.criterion(outputs, labels.float()) 
+                return loss.item()
 
     def evaluate(self):
         self.model.eval()
