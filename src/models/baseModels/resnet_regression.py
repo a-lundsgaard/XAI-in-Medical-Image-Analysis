@@ -94,10 +94,13 @@ class ResNetModel:
 
 
     def train(self):
+        early_stopping = EarlyStopping(tolerance=0, min_delta=0)
+        epoch_val_losses = []
         for epoch in range(self.num_epochs):
             self.model.train()
             running_train_loss = 0.0
             running_val_loss = 0.0
+            
             for images, labels in self.train_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad() # Zero the parameter gradients
@@ -108,7 +111,17 @@ class ResNetModel:
 
                 running_train_loss += loss.item()
                 running_val_loss += self.validation_loss()
+            
             print(f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_train_loss/len(self.train_loader)}, Val Loss: {running_val_loss/len(self.val_loader)}")
+
+            epoch_val_losses.append(running_val_loss/len(self.val_loader))
+                            
+            # Early stopping
+            if epoch > 2:
+                early_stopping(epoch_val_losses)
+                if early_stopping.early_stop:
+                    print("Early stopped at epoch:", epoch + 1)
+                    break
 
 
     def evaluate(self):
@@ -124,6 +137,21 @@ class ResNetModel:
                 running_loss += loss.item()
         
         print(f'Loss of the network on the test images: {running_loss}')
+
+
+class EarlyStopping:
+    def __init__(self, tolerance, min_delta):
+
+        self.tolerance = tolerance
+        self.min_delta = min_delta
+        self.counter = 0
+        self.early_stop = False
+
+    def __call__(self, epoch_val_losses):
+        if (epoch_val_losses[-1] - epoch_val_losses[-2]) > self.min_delta:
+            self.counter +=1
+            if self.counter >= self.tolerance:  
+                self.early_stop = True
 
 
 # Example usage
