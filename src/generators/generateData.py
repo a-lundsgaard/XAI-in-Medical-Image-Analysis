@@ -3,7 +3,7 @@ from image_generator.twoDimension.SimpleNoisyImageGenerator import SimpleNoisyIm
 from image_generator.twoDimension.ExtremeNoise2dGenerator import ExtremeNoise2dGenerator
 
 # generate images
-generator = GenerateImages(ExtremeNoise2dGenerator(num_images=10))
+generator = GenerateImages(ExtremeNoise2dGenerator(num_images=1000))
 
 # generate images
 generator.generate_images()

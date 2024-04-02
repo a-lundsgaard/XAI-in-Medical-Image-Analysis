@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from torchvision import models
 
 class ResNetModel:
-    def __init__(self, data_dir = '../../artificial_data/noisy_generated_images', image_size=(256, 256), batch_size=32, num_epochs=5):
+    def __init__(self, data_dir = '../../artificial_data/noisy_generated_images', image_size=(256, 256), batch_size=32, num_epochs=5, depth=18):
         self.data_dir = data_dir
         self.image_size = image_size
         self.batch_size = batch_size
@@ -21,7 +21,13 @@ class ResNetModel:
 
         
         # Initialize the model
-        self.model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        if depth == 18:
+            self.model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        elif depth == 34:
+            self.model = models.resnet34(weights=models.ResNet34_Weights.DEFAULT)
+        elif depth == 50:
+            self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+            
         num_features = self.model.fc.in_features
         self.model.fc = nn.Linear(num_features, 1) # Output layer for regression.
         self.model.to(self.device) 
