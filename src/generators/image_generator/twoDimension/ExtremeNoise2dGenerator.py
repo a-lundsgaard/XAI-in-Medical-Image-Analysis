@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
 import math
+# Assuming ImageGenerator is correctly defined in your project structure
 from utils.ImageGenerator import ImageGenerator  # Adjust according to your file structure
+
 
 class ExtremeNoise2dGenerator(ImageGenerator):
     """
@@ -22,14 +24,13 @@ class ExtremeNoise2dGenerator(ImageGenerator):
     def generate_images(self):
         for _ in range(self.num_images):
             while True:
-                # Create a noisy background
-                img = self.add_extreme_noise(np.zeros((self.image_size[1], self.image_size[0], 3), dtype=np.uint8))
+                # Create a noisy background for a grayscale image
+                img = self.add_extreme_noise(np.zeros((self.image_size[1], self.image_size[0]), dtype=np.uint8))
 
                 # Randomize square properties and choose fixed circle size
                 square_size = np.random.randint(self.square_min_size, self.square_max_size)
                 circle_radius = np.random.choice(self.fixed_labels)
-                print(f"circle_radius: {circle_radius}")
-                shape_color = np.random.randint(50, 206)  # Grayscale color to blend with background
+                shape_color = np.random.randint(50, 206)  # Grayscale value to blend with background
 
                 # Random positions ensuring they do not exceed image boundaries
                 circle_center = (np.random.randint(circle_radius, self.image_size[0] - circle_radius),
@@ -44,10 +45,10 @@ class ExtremeNoise2dGenerator(ImageGenerator):
                 if distance > min_distance:
                     break  # No overlap, can proceed
 
-            # Draw the square and circle with the same color on the noisy background
+            # Draw the square and circle with the same grayscale value on the noisy background
             cv2.rectangle(img, (square_center[0] - square_size // 2, square_center[1] - square_size // 2),
-                          (square_center[0] + square_size // 2, square_center[1] + square_size // 2), (shape_color, shape_color, shape_color), -1)
-            cv2.circle(img, circle_center, circle_radius, (shape_color, shape_color, shape_color), -1)
+                          (square_center[0] + square_size // 2, square_center[1] + square_size // 2), shape_color, -1)
+            cv2.circle(img, circle_center, circle_radius, shape_color, -1)
 
             # Apply heavier blurring to the entire image to increase noise
             img = cv2.GaussianBlur(img, self.blur_intensity, cv2.BORDER_DEFAULT)

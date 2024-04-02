@@ -1,9 +1,12 @@
 from utils.GenerateImages import GenerateImages
 from image_generator.twoDimension.SimpleNoisyImageGenerator import SimpleNoisyImageGenerator
+
+from image_generator.twoDimension.SimpleNoisyImageGeneratorCircle import SimpleNoisyCircleImageGenerator
+
 from image_generator.twoDimension.ExtremeNoise2dGenerator import ExtremeNoise2dGenerator
 
 # generate images
-generator = GenerateImages(ExtremeNoise2dGenerator(num_images=10))
+generator = GenerateImages(SimpleNoisyCircleImageGenerator(num_images=500))
 
 # generate images
 generator.generate_images()
