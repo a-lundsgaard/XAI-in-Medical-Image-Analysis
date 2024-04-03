@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import math
 # Assuming ImageGenerator is correctly defined in your project structure
-from utils.ImageGenerator import ImageGenerator  # Adjust according to your file structure
+from src.generators.utils.ImageGenerator import ImageGenerator;
 
 
 class ExtremeNoise2dGenerator(ImageGenerator):

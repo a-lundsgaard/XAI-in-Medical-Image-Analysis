@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import math
-from utils.ImageGenerator import ImageGenerator; # Adjust according to your file structure
+from src.generators.utils.ImageGenerator import ImageGenerator;
+
 
 class SimpleNoisyImageGenerator(ImageGenerator):
     """

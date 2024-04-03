@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
-import math
-from utils.ImageGenerator import ImageGenerator; 
+from src.generators.utils.ImageGenerator import ImageGenerator;
 
 class SimpleNoisyCircleImageGenerator(ImageGenerator):
     """
