@@ -3,11 +3,14 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
 from src.models.baseModels.resnet_regression import ResNetModel
+# from src.XAI.utils.save_plots import save_saliency_maps
+from src.XAI.utils.SaveFiles import PLTSaver
+
 
 class GradCamResnet:
     def __init__(self, modelWrapper: ResNetModel):
         self.modelWrapper = modelWrapper
-        # self.device = device
+        self.fileSaver = PLTSaver(self.__class__.__name__)
 
     def __find_last_conv_layer(self, model: torch.nn.Module):
         """
@@ -18,15 +21,29 @@ class GradCamResnet:
             if isinstance(module, torch.nn.Conv2d):
                 conv_layer = module
         return conv_layer
+    
+    def generateMultipleGradCam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default"):
+        """
+        Generate Grad-CAM visualization for a set of images.
+        Args:
+            image_count (int): The number of images for which to generate Grad-CAM visualizations.
+        """
+        self.fileSaver.set_custom_save_dir(save_dir, save_output)
 
-    def generate_grad_cam(self, index=0, use_test_data=True):
+        max_image_count = self.modelWrapper.testData.tensors[0].shape[0]
+        count = image_count if image_count <= max_image_count else max_image_count
+
+        for i in range(count):
+            self.__generate_grad_cam(index=i, use_test_data=use_test_data)
+
+    def __generate_grad_cam(self, index=0, use_test_data=True):
         """
         Generate Grad-CAM visualization for a given input image index from the test dataset.
         """
         if use_test_data:
-            input_image, _ = self.modelWrapper.get_single_test_image(index)
+            input_image, input_label = self.modelWrapper.get_single_test_image(index)
         else:
-            input_image, _ = self.modelWrapper.get_single_train_image(index)
+            input_image, input_label = self.modelWrapper.get_single_train_image(index)
 
         # Find the last convolutional layer
         target_layer = self.__find_last_conv_layer(self.modelWrapper.model)
@@ -90,11 +107,14 @@ class GradCamResnet:
         plt.subplot(1, 3, 1)
         plt.imshow(input_image.cpu().squeeze(), cmap='gray')
         plt.title("Input Image")
+        plt.title(f"Input Image (Label: {input_label})")
+
         plt.axis('off')
 
         plt.subplot(1, 3, 2)
         plt.imshow(heatmap_np, cmap='jet')
-        plt.title("Grad-CAM")
+        # plt.title("Grad-CAM")
+        plt.title(f"Grad-CAM (Prediction: {round(target.item(), 2)})")
         plt.axis('off')
 
         plt.subplot(1, 3, 3)
@@ -103,5 +123,7 @@ class GradCamResnet:
         plt.imshow(heatmap_np, cmap='jet', alpha=0.5, interpolation='nearest')
         plt.title("Overlay")
         plt.axis('off')
+
+        self.fileSaver.handleSaveImage(index, plt, f"grad_cam_{input_label}")
 
         plt.show()
