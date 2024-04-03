@@ -99,7 +99,8 @@ class ResNetModel:
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False)
 
     def train(self):
-        early_stopping = EarlyStopping(tolerance=0, min_delta=0)
+        print("Is cuda available: ", torch.cuda.is_available())
+        early_stopping = EarlyStopping(tolerance=30, min_delta=0)
         epoch_val_losses = []
         for epoch in range(self.num_epochs):
             self.model.train()

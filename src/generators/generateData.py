@@ -6,7 +6,7 @@ from image_generator.twoDimension.SimpleNoisyImageGeneratorCircle import SimpleN
 from image_generator.twoDimension.ExtremeNoise2dGenerator import ExtremeNoise2dGenerator
 
 # generate images
-generator = GenerateImages(SimpleNoisyCircleImageGenerator(num_images=1000))
+generator = GenerateImages(SimpleNoisyCircleImageGenerator(num_images=2000))
 
 # generate images
 generator.generate_images()
