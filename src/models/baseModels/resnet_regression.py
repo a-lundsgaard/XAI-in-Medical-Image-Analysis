@@ -9,12 +9,16 @@ from torch.utils.data import DataLoader, TensorDataset
 from torchvision import models
 
 class ResNetModel:
-    def __init__(self, data_dir = '../../artificial_data/noisy_generated_images', image_size=(256, 256), batch_size=32, num_epochs=5, depth=18):
+    def __init__(self, num_epochs, learning_rate, weight_decay, early_stopping_tol, early_stopping_min_delta, 
+                 image_size=(256, 256), batch_size=32, depth=18, data_dir = '../../artificial_data/noisy_generated_images'):
         self.data_dir = data_dir
         self.image_size = image_size
         self.batch_size = batch_size
         self.num_epochs = num_epochs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        self.early_stopping_tol = early_stopping_tol
+        self.early_stopping_min_delta = early_stopping_min_delta
 
         if depth == 18:
             self.model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
@@ -36,7 +40,7 @@ class ResNetModel:
 
         # Loss and optimizer
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.01)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
         # Data placeholders
         self.testData = None
@@ -104,7 +108,7 @@ class ResNetModel:
 
     def train(self):
         print("Is cuda available: ", torch.cuda.is_available())
-        early_stopping = EarlyStopping(tolerance=30, min_delta=0)
+        early_stopping = EarlyStopping(tolerance=self.early_stopping_tol, min_delta=self.early_stopping_min_delta)
         epoch_val_losses = []
         for epoch in range(self.num_epochs):
             self.model.train()
