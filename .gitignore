@@ -8,4 +8,4 @@ datasets/
 .DS_Store
 
 # ignore outputs folder
-outputs/
+#outputs/
