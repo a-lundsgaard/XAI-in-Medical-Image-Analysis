@@ -5,7 +5,8 @@ import numpy as np
 # Assuming ResNetModel is correctly imported from your project structure
 from src.models.baseModels.resnet_regression import ResNetModel
 from torch import Tensor
-
+import os
+import shutil
 
 
 class XAIResNet:
@@ -13,20 +14,26 @@ class XAIResNet:
         self.modelWrapper = modelWrapper
         self.device = device
 
-    def get_saliency_maps(self, image_count=1):
+    def get_saliency_maps(self, image_count=1, save_output=False, save_dir="default"):
         """
         Generate saliency maps for a set of images.
         Args:
             image_count (int): The number of images for which to generate saliency maps.
         """
+        data_dir = f"outputs/saliency_maps/{save_dir}"
+        if save_output:
+            if os.path.exists(data_dir):
+                shutil.rmtree(data_dir)
+            os.makedirs(data_dir)
+
         max_image_count = self.modelWrapper.testData.tensors[0].shape[0]
         count = image_count if image_count <= max_image_count else max_image_count
 
         for i in range(count):
             input_image, input_label = self.modelWrapper.get_single_test_image(index=i)
-            self.__generate_saliency_map(input_image, input_label)
+            self.__generate_saliency_map(input_image, input_label, i=i, save_output=save_output, data_dir=data_dir)
     
-    def __generate_saliency_map(self, input_image: Tensor, input_label):
+    def __generate_saliency_map(self, input_image: Tensor, input_label, i=0, save_output=False, data_dir=""):
         """
         Generate a saliency map for a given input image and label.
         Args:
@@ -68,5 +75,9 @@ class XAIResNet:
         plt.imshow(saliency.cpu(), cmap='hot')
         plt.title(f"Saliency Map (Prediction: {round(target.item(), 2)})")
         plt.axis('off')
+
+        # Save the saliency map
+        if save_output:
+            plt.savefig(f"{data_dir}/{i}_saliency_map_{input_label}.png")
 
         plt.show()
