@@ -22,12 +22,13 @@ class ResNetModel:
             self.model = models.resnet34(weights=models.ResNet34_Weights.DEFAULT)
         elif depth == 50:
             self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
-
-        # Modify the first convolutional layer to accept 1-channel input.
-        self.model.conv1 = nn.Conv2d(1, self.model.conv1.out_channels,
-                                     kernel_size=self.model.conv1.kernel_size,
-                                     stride=self.model.conv1.stride,
-                                     padding=self.model.conv1.padding, bias=False)
+        else:
+            raise ValueError("Unsupported depth for ResNet. Choose from 18, 34, 50.")
+            
+        out_channels = self.model.conv1.out_channels
+        self.model.conv1 = nn.Conv2d(1, out_channels, kernel_size=self.model.conv1.kernel_size, 
+                                     stride=self.model.conv1.stride, padding=self.model.conv1.padding, 
+                                     bias=False)
             
         num_features = self.model.fc.in_features
         self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
@@ -35,7 +36,7 @@ class ResNetModel:
 
         # Loss and optimizer
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.01)
 
         # Data placeholders
         self.testData = None
@@ -73,6 +74,9 @@ class ResNetModel:
             if filename.endswith('.png'):
                 img_path = os.path.join(self.data_dir, filename)
                 img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+                # print(img)
+                # plot image
+                # plt.imshow(img)
                 img = cv2.resize(img, self.image_size)
                 label = int(filename.split('_')[-1].split('.')[0])
                 images.append(img)
@@ -99,7 +103,7 @@ class ResNetModel:
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False)
 
     def train(self):
-        early_stopping = EarlyStopping(tolerance=0, min_delta=0)
+        early_stopping = EarlyStopping(tolerance=30, min_delta=0)
         epoch_val_losses = []
         for epoch in range(self.num_epochs):
             self.model.train()
