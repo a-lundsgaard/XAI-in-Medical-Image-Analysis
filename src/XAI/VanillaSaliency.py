@@ -46,6 +46,9 @@ class VanillaSaliency:
         # Target for backprop
         target: Tensor = output[0]
         target.backward()
+
+        grad_data = input_image.grad.data
+        minval = torch.min(grad_data)
         
         # Saliency map
         saliency, _ = torch.max(input_image.grad.data.abs(), dim=1)  # Take the max across the channels
