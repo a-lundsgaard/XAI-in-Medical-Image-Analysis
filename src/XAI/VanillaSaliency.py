@@ -13,6 +13,7 @@ class VanillaSaliency:
         self.modelWrapper = modelWrapper
         self.device = device
         self.fileSaver = PLTSaver(self.__class__.__name__)
+        self.sailency = None
 
     def get_saliency_maps(self, image_count=1, save_output=False, save_dir="default"):
         """
@@ -27,9 +28,9 @@ class VanillaSaliency:
 
         for i in range(count):
             input_image, input_label = self.modelWrapper.get_single_test_image(index=i)
-            self.__generate_saliency_map(input_image, input_label, i=i, save_output=save_output)
+            self.generate_saliency_map(input_image, input_label, i=i)
     
-    def __generate_saliency_map(self, input_image: Tensor, input_label, i=0):
+    def generate_saliency_map(self, input_image: Tensor, input_label, i=0):
         """
         Generate a saliency map for a given input image and label.
         Args:
@@ -49,6 +50,7 @@ class VanillaSaliency:
         # Saliency map
         saliency, _ = torch.max(input_image.grad.data.abs(), dim=1)  # Take the max across the channels
         saliency = saliency.reshape(self.modelWrapper.image_size)  # Assuming modelWrapper has attribute image_size
+        self.saliency = saliency
 
         # For grayscale images, the original image is 2D, so no need for color channel conversion
         original_image = input_image.detach().cpu().squeeze().numpy()  # Remove batch dimension and convert to numpy

@@ -5,12 +5,14 @@ import numpy as np
 from src.models.baseModels.resnet_regression import ResNetModel
 # from src.XAI.utils.save_plots import save_saliency_maps
 from src.XAI.utils.SaveFiles import PLTSaver
+from torch import Tensor
 
 
 class GradCamResnet:
     def __init__(self, modelWrapper: ResNetModel):
         self.modelWrapper = modelWrapper
         self.fileSaver = PLTSaver(self.__class__.__name__)
+        self.heatmap: Tensor = None
 
     def __find_last_conv_layer(self, model: torch.nn.Module):
         """
@@ -34,9 +36,9 @@ class GradCamResnet:
         count = image_count if image_count <= max_image_count else max_image_count
 
         for i in range(count):
-            self.__generate_grad_cam(index=i, use_test_data=use_test_data)
+            self.generate_grad_cam(index=i, use_test_data=use_test_data)
 
-    def __generate_grad_cam(self, index=0, use_test_data=True):
+    def generate_grad_cam(self, index=0, use_test_data=True):
         """
         Generate Grad-CAM visualization for a given input image index from the test dataset.
         """
@@ -56,21 +58,23 @@ class GradCamResnet:
         grads = []
 
         def hook_features(module, input, output):
+            # print("Feature map mean:", output.mean().item())
             features.append(output)
 
         def hook_grads(module, grad_in, grad_out):
+            # print("Gradient mean:", grad_out[0].mean().item())
             grads.append(grad_out[0])
 
         hook_f = target_layer.register_forward_hook(hook_features)
         hook_b = target_layer.register_backward_hook(hook_grads)
 
         # Forward pass
-        output = self.modelWrapper.model(input_image)
+        output: Tensor = self.modelWrapper.model(input_image)
         self.modelWrapper.model.zero_grad()
 
         # Backward pass
         if self.modelWrapper.model.fc.out_features == 1:  # Regression
-            target = output
+            target: Tensor = output
         else:  # Classification
             target = output.argmax(dim=1)
         target.backward()
@@ -88,8 +92,34 @@ class GradCamResnet:
 
         # Generate the heatmap
         heatmap = torch.mean(feature_maps, dim=1).squeeze()
-        heatmap = F.relu(heatmap)
-        heatmap /= torch.max(heatmap)  # Normalize the heatmap
+        #heatmap = torch.abs(heatmap)  # Use absolute values to consider all activations
+        max_val = torch.max(heatmap)
+
+        # heatmap = F.relu(heatmap)  # already applying ReLU here
+        #heatmap = F.relu(heatmap)
+        #max_val = torch.max(heatmap)
+        #mean_val = torch.mean(heatmap)
+        print("Max value in heatmap before ReLU is:", max_val)
+
+        if max_val > 0:
+            heatmap = F.relu(heatmap)
+            heatmap /= torch.max(heatmap)
+        else:
+            #heatmap /= heatmap.norm() + 1e-8
+            #heatmap = torch.abs(heatmap)
+            # min_val = torch.min(heatmap)
+            # heatmap += min_val*0.01
+
+            min_val = torch.min(heatmap).abs()
+            heatmap += min_val*0.85
+            heatmap *= -1
+            max_val = torch.max(heatmap)
+            heatmap = F.relu(heatmap)
+            heatmap /= max_val
+            print("Max value in heatmap after ReLU is zero3.")
+
+
+
 
         # Resize heatmap to the input image size
         heatmap = torch.nn.functional.interpolate(
@@ -99,8 +129,28 @@ class GradCamResnet:
             align_corners=False
         ).squeeze()
 
+
         # Convert heatmap to numpy for visualization
+        self.heatmap = heatmap
         heatmap_np = heatmap.cpu().detach().numpy()
+
+        """ plt.figure(figsize=(15, 5))
+        plt.subplot(1, 2, 1)
+        plt.imshow(features[-1][0, 0].cpu().detach(), cmap='gray')
+        plt.title("Sample Feature Map")
+
+        plt.subplot(1, 2, 2)
+        feature_gradient = grads[-1][0, 0].cpu().detach()
+        plt.imshow(feature_gradient, cmap='gray')
+        plt.title("Corresponding Gradient Map")
+        plt.show()
+
+        if torch.max(feature_gradient) > 0:
+            feature_gradient /= torch.max(feature_gradient)
+        plt.imshow(feature_gradient, cmap='gray')
+        plt.title("Normalized Gradient Map")
+        plt.show() """
+
 
         # Visualization
         plt.figure(figsize=(12, 4))
