@@ -6,6 +6,7 @@ from src.models.baseModels.resnet_regression import ResNetModel
 # from src.XAI.utils.save_plots import save_saliency_maps
 from src.XAI.utils.SaveFiles import PLTSaver
 from torch import Tensor
+from torch.utils.data import TensorDataset
 
 
 class GradCamResnet:
@@ -24,7 +25,7 @@ class GradCamResnet:
                 conv_layer = module
         return conv_layer
     
-    def generateMultipleGradCam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default"):
+    def generateMultipleGradCam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default", externalEvalData: TensorDataset = None):
         """
         Generate Grad-CAM visualization for a set of images.
         Args:
@@ -36,16 +37,19 @@ class GradCamResnet:
         count = image_count if image_count <= max_image_count else max_image_count
 
         for i in range(count):
-            self.generate_grad_cam(index=i, use_test_data=use_test_data)
+            self.generate_grad_cam(index=i, use_test_data=use_test_data, externalEvalData=externalEvalData)
 
-    def generate_grad_cam(self, index=0, use_test_data=True):
+    def generate_grad_cam(self, index=0, use_test_data=True, externalEvalData: TensorDataset = None):
         """
         Generate Grad-CAM visualization for a given input image index from the test dataset.
         """
-        if use_test_data:
-            input_image, input_label = self.modelWrapper.get_single_test_image(index)
+        if externalEvalData is not None:
+            input_image, input_label = self.modelWrapper.get_single_image(externalEvalData, index)
         else:
-            input_image, input_label = self.modelWrapper.get_single_train_image(index)
+            if use_test_data:
+                input_image, input_label = self.modelWrapper.get_single_test_image(index)
+            else:
+                input_image, input_label = self.modelWrapper.get_single_train_image(index)
 
         # Find the last convolutional layer
         target_layer = self.__find_last_conv_layer(self.modelWrapper.model)
