@@ -7,6 +7,7 @@ import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 from torchvision import models
+from torch import Tensor
 
 class ResNetModel:
     def __init__(self, num_epochs, learning_rate, weight_decay, early_stopping_tol, early_stopping_min_delta, 
@@ -45,6 +46,8 @@ class ResNetModel:
         # Data placeholders
         self.testData = None
         self.trainingData = None
+        self.evalData = None
+
         self.train_loader = None
         self.val_loader = None
         self.test_loader = None
@@ -119,7 +122,7 @@ class ResNetModel:
                 images, labels = images.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = self.model(images).flatten()
-                loss = self.criterion(outputs, labels)
+                loss: Tensor = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
 
