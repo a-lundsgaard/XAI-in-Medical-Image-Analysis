@@ -27,7 +27,7 @@ class ContSimpleNoisyImageGenerator(ImageGenerator):
 
                 # Set circle properties
                 # circle_radius = np.random.choice(self.fixed_labels)
-                circle_radius = np.random.randint(20, 100)
+                circle_radius = np.random.randint(5, 100)
                 circle_center = (np.random.randint(circle_radius, self.image_size[0] - circle_radius),
                                  np.random.randint(circle_radius, self.image_size[1] - circle_radius))
 
