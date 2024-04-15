@@ -29,7 +29,8 @@ class ExtremeNoise2dGenerator(ImageGenerator):
 
                 # Randomize square properties and choose fixed circle size
                 square_size = np.random.randint(self.square_min_size, self.square_max_size)
-                circle_radius = np.random.choice(self.fixed_labels)
+                # circle_radius = np.random.choice(self.fixed_labels)
+                circle_radius = np.random.randint(5, 100)
                 shape_color = np.random.randint(50, 206)  # Grayscale value to blend with background
 
                 # Random positions ensuring they do not exceed image boundaries
