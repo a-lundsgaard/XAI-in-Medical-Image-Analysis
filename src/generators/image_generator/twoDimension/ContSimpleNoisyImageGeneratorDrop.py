@@ -3,15 +3,15 @@ import numpy as np
 import math
 from src.generators.utils.ImageGenerator import ImageGenerator;
 
-
-class SimpleNoisyImageGenerator(ImageGenerator):
+class ContSimpleNoisyImageGeneratorDrop(ImageGenerator):
     """
     Generates a set of noisy images with a square and a circle on a static blurred background,
     ensuring they do not overlap, with fixed circle sizes (labels) in grayscale. 
     The shapes are not semi-transparent and the background blur does not rotate with the shapes.
+    Randomly leaves out the rectangle from the data.
     """
-    def __init__(self, num_images, image_size=(256, 256), square_size=50, maxSize=100):
-        super().__init__(num_images, image_size, maxSize)
+    def __init__(self, num_images, image_size=(256, 256), square_size=50):
+        super().__init__(num_images, image_size)
         self.square_size = square_size
         # Assuming self.fixed_labels is defined elsewhere in the class or inherited.
 
@@ -26,8 +26,7 @@ class SimpleNoisyImageGenerator(ImageGenerator):
                 background = cv2.GaussianBlur(noise, (5, 5), cv2.BORDER_DEFAULT)
 
                 # Set circle properties
-                # circle_radius = np.random.choice(self.fixed_labels)
-                circle_radius = np.random.randint(5, self.maxSize)
+                circle_radius = np.random.rand(5, 25)
                 circle_center = (np.random.randint(circle_radius, self.image_size[0] - circle_radius),
                                  np.random.randint(circle_radius, self.image_size[1] - circle_radius))
 
@@ -42,9 +41,13 @@ class SimpleNoisyImageGenerator(ImageGenerator):
                 if distance > min_distance:
                     break
 
+            # Randomly decide whether to include the rectangle
+            include_rectangle = np.random.choice([True, False])
+
             # Draw the square and circle in white on the shapes image
-            cv2.rectangle(shapes_img, (square_center[0] - self.square_size // 2, square_center[1] - self.square_size // 2),
-                          (square_center[0] + self.square_size // 2, square_center[1] + self.square_size // 2), 255, -1)
+            if include_rectangle:
+                cv2.rectangle(shapes_img, (square_center[0] - self.square_size // 2, square_center[1] - self.square_size // 2),
+                              (square_center[0] + self.square_size // 2, square_center[1] + self.square_size // 2), 255, -1)
             cv2.circle(shapes_img, circle_center, circle_radius, 255, -1)
 
             # Rotate shapes

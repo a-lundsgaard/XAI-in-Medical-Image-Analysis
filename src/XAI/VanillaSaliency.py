@@ -23,7 +23,7 @@ class VanillaSaliency:
         """
         self.fileSaver.set_custom_save_dir(save_dir, save_output)
 
-        max_image_count = self.modelWrapper.testData.tensors[0].shape[0]
+        max_image_count = self.modelWrapper.dataLoader.testData.tensors[0].shape[0]
         count = image_count if image_count <= max_image_count else max_image_count
 
         for i in range(count):
@@ -52,7 +52,7 @@ class VanillaSaliency:
         
         # Saliency map
         saliency, _ = torch.max(input_image.grad.data.abs(), dim=1)  # Take the max across the channels
-        saliency = saliency.reshape(self.modelWrapper.image_size)  # Assuming modelWrapper has attribute image_size
+        saliency = saliency.reshape(self.modelWrapper.dataLoader.image_size)  # Assuming modelWrapper has attribute image_size
         self.saliency = saliency
 
         # For grayscale images, the original image is 2D, so no need for color channel conversion

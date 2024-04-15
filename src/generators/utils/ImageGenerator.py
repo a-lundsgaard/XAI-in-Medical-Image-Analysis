@@ -6,12 +6,13 @@ class ImageGenerator(ABC):
     """
     Abstract class for generating images.
     """
-    def __init__(self, num_images, image_size):
+    def __init__(self, num_images, image_size, maxSize=100):
         self.num_images = num_images
         self.image_size = image_size
         self.fixed_labels = [20, 40, 60, 80, 100]
         self.images = []
         self.labels = []
+        self.maxSize = maxSize
 
     @abstractmethod
     def generate_images(self):

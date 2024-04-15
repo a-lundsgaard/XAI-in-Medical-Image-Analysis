@@ -7,8 +7,8 @@ class SimpleNoisyCircleImageGenerator(ImageGenerator):
     Generates a set of noisy images with a single circle on a static blurred background,
     with fixed circle sizes (labels) in grayscale. The background blur does not rotate with the circle.
     """
-    def __init__(self, num_images, image_size=(256, 256)):
-        super().__init__(num_images, image_size)
+    def __init__(self, num_images, image_size=(256, 256), maxSize=100):
+        super().__init__(num_images, image_size, maxSize)
         # Assuming self.fixed_labels is defined elsewhere in the class or inherited.
 
     def generate_images(self):
@@ -21,7 +21,8 @@ class SimpleNoisyCircleImageGenerator(ImageGenerator):
             background = cv2.GaussianBlur(noise, (5, 5), cv2.BORDER_DEFAULT)
 
             # Set circle properties
-            circle_radius = np.random.choice(self.fixed_labels)
+            # circle_radius = np.random.choice(self.fixed_labels)
+            circle_radius = np.random.randint(5, self.maxSize)
             circle_center = (np.random.randint(circle_radius, self.image_size[0] - circle_radius),
                              np.random.randint(circle_radius, self.image_size[1] - circle_radius))
 
