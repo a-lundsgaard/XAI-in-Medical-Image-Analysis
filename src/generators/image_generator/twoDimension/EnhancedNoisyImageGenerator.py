@@ -4,8 +4,8 @@ import math
 from src.generators.utils.ImageGenerator import ImageGenerator;
 
 class EnhancedNoisyImageGenerator(ImageGenerator):
-    def __init__(self, num_images, image_size=(256, 256), square_size=50, maxSize=100):
-        super().__init__(num_images, image_size, maxSize=maxSize)
+    def __init__(self, num_images, image_size=(256, 256), square_size=50, maxSize=100, minSize=5):
+        super().__init__(num_images, image_size, maxSize=maxSize, minSize=minSize)
         self.square_size = square_size
         # Assuming self.fixed_labels is defined elsewhere in the class or inherited.
 
@@ -24,7 +24,7 @@ class EnhancedNoisyImageGenerator(ImageGenerator):
                 noise = np.random.randint(0, 256, (self.image_size[1], self.image_size[0]), dtype=np.uint8)
                 background = cv2.GaussianBlur(noise, (5, 5), cv2.BORDER_DEFAULT)
 
-                circle_radius = np.random.randint(5, self.maxSize)
+                circle_radius = np.random.randint(self.minSize, self.maxSize)
                 circle_center = (np.random.randint(circle_radius, self.image_size[0] - circle_radius),
                                  np.random.randint(circle_radius, self.image_size[1] - circle_radius))
 

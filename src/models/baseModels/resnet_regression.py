@@ -12,10 +12,12 @@ from src.dataLoaders.DataLoader import DataSetLoader
 
 class ResNetModel:
     def __init__(self, num_epochs, learning_rate, weight_decay, early_stopping_tol, early_stopping_min_delta, 
-                 image_size=(256, 256), batch_size=32, depth=18, data_dir = '../../artificial_data/noisy_generated_images'):
+                 image_size=(256, 256), batch_size=32, depth=18, data_dir = '../../artificial_data/noisy_generated_images',
+                 dataLoader: DataSetLoader = None
+                 ):
         self.num_epochs = num_epochs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.dataLoader = DataSetLoader(data_dir, image_size, batch_size)
+        self.dataLoader = dataLoader or DataSetLoader(data_dir, image_size, batch_size)
 
         self.early_stopping_tol = early_stopping_tol
         self.early_stopping_min_delta = early_stopping_min_delta

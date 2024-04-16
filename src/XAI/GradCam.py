@@ -95,8 +95,9 @@ class GradCamResnet:
             feature_maps[:, i, :, :] *= pooled_gradients[i]
 
         # Generate the heatmap
+        fe_max = torch.max(feature_maps)
         heatmap = torch.mean(feature_maps, dim=1).squeeze()
-        #heatmap = torch.abs(heatmap)  # Use absolute values to consider all activations
+        # heatmap = torch.abs(heatmap)  # Use absolute values to consider all activations
         max_val = torch.max(heatmap)
 
         # heatmap = F.relu(heatmap)  # already applying ReLU here
@@ -106,21 +107,22 @@ class GradCamResnet:
         print("Max value in heatmap before ReLU is:", max_val)
 
         if max_val > 0:
+            #heatmap = F.relu(heatmap)
             heatmap = F.relu(heatmap)
             heatmap /= torch.max(heatmap)
         else:
-            heatmap = torch.zeros_like(heatmap)
+            # heatmap = torch.zeros_like(heatmap)
             #heatmap /= heatmap.norm() + 1e-8
             #heatmap = torch.abs(heatmap)
-            # min_val = torch.min(heatmap)
-            # heatmap += min_val*0.01
+            #min_val = torch.min(heatmap)
+            #heatmap += min_val*0.01
 
-            # min_val = torch.min(heatmap).abs()
-           #  heatmap += min_val*0.85
-           #  heatmap *= -1
-           #  max_val = torch.max(heatmap)
-           #  heatmap = F.relu(heatmap)
-            # heatmap /= max_val
+            min_val = torch.min(heatmap).abs()
+            print("Min value in heatmap before ReLU is:", min_val)
+            heatmap += min_val
+            #heatmap *= -1
+            # heatmap = F.relu(heatmap)
+            heatmap /= torch.max(heatmap)
             print("Max value in heatmap after ReLU is zero3.")
 
 
