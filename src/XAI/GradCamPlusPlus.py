@@ -75,8 +75,22 @@ class GradCamPlusPlus:
         for i in range(feature_maps.shape[1]):
             grad_cam_map += weights[0, i, :, :] * feature_maps[0, i, :, :]
 
-        grad_cam_map = F.relu(grad_cam_map)
-        grad_cam_map = grad_cam_map / grad_cam_map.max()
+        
+        max_val = grad_cam_map.max()
+
+        if max_val > 0:
+            grad_cam_map = F.relu(grad_cam_map)
+            grad_cam_map = grad_cam_map / grad_cam_map.max()
+        else:
+            min_val = torch.min(grad_cam_map).abs()
+            print("Min value in heatmap before ReLU is:", min_val)
+            grad_cam_map += min_val*0.01
+            # heatmap *= -1
+            # heatmap = F.relu(heatmap)
+            grad_cam_map /= torch.max(grad_cam_map)
+            print("Max value in heatmap after ReLU is zero3.")            
+
+
 
         heatmap = F.interpolate(
             grad_cam_map.unsqueeze(0).unsqueeze(0),

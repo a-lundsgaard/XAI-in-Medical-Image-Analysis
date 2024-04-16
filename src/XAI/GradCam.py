@@ -119,8 +119,8 @@ class GradCamResnet:
 
             min_val = torch.min(heatmap).abs()
             print("Min value in heatmap before ReLU is:", min_val)
-            heatmap += min_val
-            #heatmap *= -1
+            heatmap += min_val*0.01
+            # heatmap *= -1
             # heatmap = F.relu(heatmap)
             heatmap /= torch.max(heatmap)
             print("Max value in heatmap after ReLU is zero3.")
