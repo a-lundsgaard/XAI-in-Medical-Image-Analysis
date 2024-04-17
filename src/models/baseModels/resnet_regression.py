@@ -17,7 +17,14 @@ class ResNetModel:
                  dataLoader: DataSetLoader = None
                  ):
         self.num_epochs = num_epochs
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        elif torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+        else:
+            self.device = torch.device("cpu")
+
         self.dataLoader = dataLoader or DataSetLoader(data_dir, image_size, batch_size)
 
         self.early_stopping_tol = early_stopping_tol
@@ -71,6 +78,7 @@ class ResNetModel:
 
     def train(self):
         print("Is cuda available: ", torch.cuda.is_available())
+        print("Is mps available: ", torch.backends.mps.is_available())
         early_stopping = EarlyStopping(tolerance=self.early_stopping_tol, min_delta=self.early_stopping_min_delta)
         epoch_val_losses = []
         for epoch in range(self.num_epochs):
