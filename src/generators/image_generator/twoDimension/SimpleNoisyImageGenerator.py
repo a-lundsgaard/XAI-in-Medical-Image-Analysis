@@ -10,13 +10,14 @@ class SimpleNoisyImageGenerator(ImageGenerator):
     ensuring they do not overlap, with fixed circle sizes (labels) in grayscale. 
     The shapes are not semi-transparent and the background blur does not rotate with the shapes.
     """
-    def __init__(self, num_images, image_size=(256, 256), square_size=50, maxSize=100):
-        super().__init__(num_images, image_size, maxSize)
+    def __init__(self, num_images, image_size=(256, 256), square_size=50, minSize=5, maxSize=100):
+        super().__init__(num_images, image_size, maxSize, minSize)
         self.square_size = square_size
         # Assuming self.fixed_labels is defined elsewhere in the class or inherited.
 
     def generate_images(self):
         for _ in range(self.num_images):
+            self.square_size = np.random.randint(20, 50)
             while True:
                 # Create a blank grayscale image for shapes
                 shapes_img = np.zeros((self.image_size[1], self.image_size[0]), dtype=np.uint8)
@@ -27,7 +28,7 @@ class SimpleNoisyImageGenerator(ImageGenerator):
 
                 # Set circle properties
                 # circle_radius = np.random.choice(self.fixed_labels)
-                circle_radius = np.random.randint(5, self.maxSize)
+                circle_radius = np.random.randint(self.minSize, self.maxSize)
                 circle_center = (np.random.randint(circle_radius, self.image_size[0] - circle_radius),
                                  np.random.randint(circle_radius, self.image_size[1] - circle_radius))
 
