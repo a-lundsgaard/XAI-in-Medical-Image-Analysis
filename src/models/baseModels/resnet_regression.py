@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset
 from torchvision import models
 from torch import Tensor
+from torcheval.metrics import R2Score
 from src.dataLoaders.DataLoader import DataSetLoader
 
 class ResNetModel:
@@ -111,15 +112,20 @@ class ResNetModel:
     def evaluate(self):
         self.model.eval()
         running_loss = 0.0
+        r2_metric = R2Score()
         with torch.no_grad():
             for images, labels in self.dataLoader.test_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 outputs = self.model(images)
                 predicted = outputs.flatten()
+
                 loss = self.criterion(predicted, labels)
                 running_loss += loss.item()
+                r2_metric.update(predicted, labels)
 
+        r2_score = r2_metric.compute()
         print(f'Loss of the network on the test images: {running_loss / len(self.dataLoader.test_loader)}')
+        print(f'R^2 score of the network on the test images: {r2_score}')
 
 class EarlyStopping:
     def __init__(self, tolerance, min_delta):
