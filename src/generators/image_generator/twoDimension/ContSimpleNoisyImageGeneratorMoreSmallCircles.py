@@ -18,6 +18,7 @@ class ContSimpleNoisyImageGeneratorMoreSmallCircles(ImageGenerator):
         # Assuming self.fixed_labels is defined elsewhere in the class or inherited.
 
     def generate_images(self):
+        np.random.seed(42)
         for _ in range(self.num_images):
             while True:
                 # Create a blank grayscale image for shapes
@@ -33,7 +34,7 @@ class ContSimpleNoisyImageGeneratorMoreSmallCircles(ImageGenerator):
 
                 # Move distribution of circle sizes towards smaller circles.
                 p = 0.1
-                scale = 0.3
+                scale = 0.5
                 should_reduce_radius = np.random.choice([0, 1], p=[p, 1-p])
                 if should_reduce_radius:
                     circle_radius = int(circle_radius*scale)
@@ -73,3 +74,4 @@ class ContSimpleNoisyImageGeneratorMoreSmallCircles(ImageGenerator):
             # Add the grayscale image with solid shapes and non-rotated blur background, and its label to the list
             self.images.append(img)
             self.labels.append(circle_radius)
+
