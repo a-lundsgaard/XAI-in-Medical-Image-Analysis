@@ -22,7 +22,7 @@ class GuidedGradCam:
             save_output (bool): Whether to save the output visualizations.
             save_dir (str): The directory to save the output visualizations.
         """
-        max_image_count = self.grad_cam.modelWrapper.testData.tensors[0].shape[0]
+        max_image_count = self.grad_cam.modelWrapper.dataLoader.testData.tensors[0].shape[0]
         count = image_count if image_count <= max_image_count else max_image_count
 
         self.fileSaver.set_custom_save_dir(save_dir, save_output)
@@ -40,7 +40,7 @@ class GuidedGradCam:
         """
         # Generate Grad-CAM heatmap
         input_image, input_label = self.grad_cam.modelWrapper.get_single_test_image(index) if use_test_data else self.grad_cam.modelWrapper.get_single_train_image(index)
-        self.grad_cam.generate_grad_cam(index=index, use_test_data=use_test_data)
+        self.grad_cam.generate_grad_cam(index=index)
         grad_cam_heatmap = self.grad_cam.heatmap  # Assuming heatmap is stored after grad_cam generation
 
         # Generate Vanilla Gradient saliency map

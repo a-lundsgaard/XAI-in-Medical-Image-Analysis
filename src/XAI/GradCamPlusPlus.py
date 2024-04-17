@@ -97,7 +97,7 @@ class GradCamPlusPlus:
         else:
             grad_cam_map = torch.abs(grad_cam_map)
             max_val = torch.max(grad_cam_map)
-            grad_cam_map -= max_val*0.95
+            grad_cam_map -= max_val*0.50
             #print("Min value in heatmap before ReLU is:", min_val)
             #grad_cam_map += min_val
             # heatmap *= -  1

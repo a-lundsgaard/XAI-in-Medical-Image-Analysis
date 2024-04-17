@@ -76,7 +76,7 @@ class ModifiedGradCam:
         else:
             heatmap = torch.abs(heatmap)
             max_val = torch.max(heatmap)
-            heatmap -= max_val*0.50
+            heatmap -= max_val*0.80
             #print("Min value in heatmap before ReLU is:", min_val)
             #grad_cam_map += min_val
             # heatmap *= -  1
@@ -89,6 +89,7 @@ class ModifiedGradCam:
                                 mode='bilinear',
                                 align_corners=False).squeeze()
 
+        self.heatmap = heatmap
         # Convert heatmap to numpy for visualization
         heatmap_np = heatmap.cpu().detach().numpy()
         img_np = input_image.cpu().squeeze().numpy()
