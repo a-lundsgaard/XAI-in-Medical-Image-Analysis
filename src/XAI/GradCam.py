@@ -98,6 +98,7 @@ class GradCamResnet:
         fe_max = torch.max(feature_maps)
         heatmap = torch.mean(feature_maps, dim=1).squeeze()
         # heatmap = torch.abs(heatmap)  # Use absolute values to consider all activations
+        heatmap = torch.abs(heatmap)
         max_val = torch.max(heatmap)
 
         # heatmap = F.relu(heatmap)  # already applying ReLU here
@@ -105,6 +106,7 @@ class GradCamResnet:
         #max_val = torch.max(heatmap)
         #mean_val = torch.mean(heatmap)
         print("Max value in heatmap before ReLU is:", max_val)
+        
 
         if max_val > 0:
             #heatmap = F.relu(heatmap)

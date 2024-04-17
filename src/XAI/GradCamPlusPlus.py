@@ -21,6 +21,15 @@ class GradCamPlusPlus:
             if isinstance(module, torch.nn.Conv2d):
                 conv_layer = module
         return conv_layer
+    
+    def normalize_map(self, grad_cam_map):
+        min_val = grad_cam_map.min()
+        max_val = grad_cam_map.max()
+        if max_val - min_val > 0:  # Avoid division by zero
+            normalized_map = (grad_cam_map - min_val) / (max_val - min_val)
+        else:
+            normalized_map = torch.zeros_like(grad_cam_map)  # If all values are the same
+        return normalized_map
 
     def generateMultipleGradCam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default", externalEvalData: TensorDataset = None):
         self.fileSaver.set_custom_save_dir(save_dir, save_output)
@@ -64,29 +73,35 @@ class GradCamPlusPlus:
             target = output.argmax(dim=1)
         target.backward()
 
+        target: Tensor = output
+
         hook_f.remove()
         hook_b.remove()
 
         gradients = grads[0]
+        mean_grads = torch.mean(gradients, dim=[0, 1, 2, 3])
         feature_maps = features[0]
+        fe_max = feature_maps.max()
         weights = F.adaptive_avg_pool2d(gradients, (1, 1))
 
         grad_cam_map = torch.zeros(feature_maps.shape[2:], device=feature_maps.device)
         for i in range(feature_maps.shape[1]):
             grad_cam_map += weights[0, i, :, :] * feature_maps[0, i, :, :]
 
-        
+        #grad_cam_map = self.normalize_map(grad_cam_map)
         max_val = grad_cam_map.max()
 
         if max_val > 0:
             grad_cam_map = F.relu(grad_cam_map)
             grad_cam_map = grad_cam_map / grad_cam_map.max()
         else:
-            min_val = torch.min(grad_cam_map).abs()
-            print("Min value in heatmap before ReLU is:", min_val)
-            grad_cam_map += min_val*0.01
-            # heatmap *= -1
-            # heatmap = F.relu(heatmap)
+            grad_cam_map = torch.abs(grad_cam_map)
+            max_val = torch.max(grad_cam_map)
+            grad_cam_map -= max_val*0.50
+            #print("Min value in heatmap before ReLU is:", min_val)
+            #grad_cam_map += min_val
+            # heatmap *= -  1
+            grad_cam_map = F.relu(grad_cam_map)
             grad_cam_map /= torch.max(grad_cam_map)
             print("Max value in heatmap after ReLU is zero3.")            
 

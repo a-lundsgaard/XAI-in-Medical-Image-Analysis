@@ -120,7 +120,8 @@ class ResNetModel:
     def evaluate(self):
         self.model.eval()
         running_loss = 0.0
-        r2_metric = R2Score()
+        # Initialize the R2Score metric and move it to the same device as model and data
+        r2_metric = R2Score().to(self.device)
         with torch.no_grad():
             for images, labels in self.dataLoader.test_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
@@ -131,8 +132,10 @@ class ResNetModel:
                 running_loss += loss.item()
                 r2_metric.update(predicted, labels)
 
+        # Compute final R2 score and average loss
         r2_score = r2_metric.compute()
-        print(f'Loss of the network on the test images: {running_loss / len(self.dataLoader.test_loader)}')
+        average_loss = running_loss / len(self.dataLoader.test_loader)
+        print(f'Loss of the network on the test images: {average_loss}')
         print(f'R^2 score of the network on the test images: {r2_score}')
 
 class EarlyStopping:
