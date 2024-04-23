@@ -10,19 +10,25 @@ from torch.utils.data import TensorDataset
 
 
 class GradCamResnet:
-    def __init__(self, modelWrapper: ResNetModel):
+    def __init__(self, modelWrapper: ResNetModel, layerCount=20):
         self.modelWrapper = modelWrapper
         self.fileSaver = PLTSaver(self.__class__.__name__)
         self.heatmap: Tensor = None
+        self.layerCount = layerCount
 
     def __find_last_conv_layer(self, model: torch.nn.Module):
         """
         Find the last convolutional layer in the model for Grad-CAM.
         """
         conv_layer = None
+        instanceCount = 0
         for name, module in model.named_modules():
             if isinstance(module, torch.nn.Conv2d):
+                instanceCount += 1
                 conv_layer = module
+                if instanceCount > self.layerCount-1:
+                    break
+        print(f"Found {instanceCount} instances of Conv2d layers.") 
         return conv_layer
     
     def generateMultipleGradCam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default", externalEvalData: TensorDataset = None):
@@ -98,7 +104,7 @@ class GradCamResnet:
         fe_max = torch.max(feature_maps)
         heatmap = torch.mean(feature_maps, dim=1).squeeze()
         # heatmap = torch.abs(heatmap)  # Use absolute values to consider all activations
-        heatmap = torch.abs(heatmap)
+       # heatmap = torch.abs(heatmap)
         max_val = torch.max(heatmap)
 
         # heatmap = F.relu(heatmap)  # already applying ReLU here
