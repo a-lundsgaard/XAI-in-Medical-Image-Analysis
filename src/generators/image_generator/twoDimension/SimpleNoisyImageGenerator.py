@@ -17,7 +17,7 @@ class SimpleNoisyImageGenerator(ImageGenerator):
 
     def generate_images(self):
         for _ in range(self.num_images):
-            self.square_size = np.random.randint(20, 50)
+            self.square_size = 40
             while True:
                 # Create a blank grayscale image for shapes
                 shapes_img = np.zeros((self.image_size[1], self.image_size[0]), dtype=np.uint8)
