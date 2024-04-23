@@ -5,6 +5,10 @@ from src.models.baseModels.resnet_regression import ResNetModel
 from src.XAI.utils.SaveFiles import PLTSaver
 from torch.utils.data import TensorDataset
 import shap
+# reload shap in case it was modified
+import importlib
+
+importlib.reload(shap)
 
 class DeepShapResnet:
     def __init__(self, modelWrapper: ResNetModel):
@@ -29,7 +33,7 @@ class DeepShapResnet:
         for handle in handles:
             handle.restore()
 
-    def generate_deep_shap(self, index=0, use_test_data=True, externalEvalData: TensorDataset = None, num_background_samples=50):
+    def generate_deep_shap(self, index=0, use_test_data=True, externalEvalData: TensorDataset = None, num_background_samples=10):
         if externalEvalData is not None:
             input_image, input_label = self.modelWrapper.get_single_image(externalEvalData, index)
         else:
@@ -42,28 +46,33 @@ class DeepShapResnet:
         background = background.to(self.modelWrapper.device)
 
         # Remove existing hooks if necessary
-        handles = self.remove_hooks()
+        #hooks = self.remove_hooks()
 
-        # Define SHAP Deep Explainer
-        explainer = shap.DeepExplainer(self.modelWrapper.model, background)
+        # Define SHAP Deep Explainer and generate SHAP values
+        # explainer = shap.GradientExplainer(self.modelWrapper.model, background)
+        explainer = shap.GradientExplainer((self.modelWrapper.model, self.modelWrapper.model.eval()), background)
 
-        # Compute SHAP values
-        shap_values = explainer.shap_values(input_image.unsqueeze(0))
+        shap_values = explainer.shap_values(input_image , nsamples=10)
+        print(shap_values.shape)
 
-        # Restore hooks after using SHAP
-        # self.restore_hooks(handles)
+
+        #shap_values = explainer.shap_values(input_image)
+
+        # Restore hooks if they were removed before
+        #self.restore_hooks(hooks)
+
+
+
 
         # Visualization
-        plt.figure(figsize=(12, 4))
-        plt.subplot(1, 2, 1)
-        plt.imshow(input_image.cpu().squeeze(), cmap='gray')
-        plt.title(f"Input Image (Label: {input_label})")
-        plt.axis('off')
 
-        plt.subplot(1, 2, 2)
-        shap.image_plot(shap_values, input_image.numpy().transpose(1, 2, 0))
-        self.fileSaver.handleSaveImage(index, plt, f"deep_shap_{input_label}")
-        plt.show()
+        # Assuming input_image originally has shape [1, 1, 256, 256] due to unsqueeze and single channel
+        # Removing batch and channel dimensions since it's single-channel grayscale
+        image_for_plot = input_image.cpu().squeeze().numpy() # This will result in shape [256, 256]
+        print(image_for_plot.shape)
+        shap.image_plot(shap_values, image_for_plot)
+        # self.fileSaver.handleSaveImage(index, plt, f"deep_shap_{input_label}")
+        # plt.show()
 
 # Example Usage
 # model = ResNetModel(...)

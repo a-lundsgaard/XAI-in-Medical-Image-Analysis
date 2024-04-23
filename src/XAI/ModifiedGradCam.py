@@ -60,7 +60,7 @@ class ModifiedGradCam:
         hook_b.remove()
 
         gradients = grads[0]
-        pooled_gradients = torch.mean(gradients, dim=[0, 2, 3]).abs()
+        pooled_gradients = torch.mean(gradients, dim=[0, 2, 3])
         feature_maps = features[0]
         # feature_maps = feature_maps.abs()
         for i in range(feature_maps.shape[1]):
