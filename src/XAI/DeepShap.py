@@ -1,39 +1,49 @@
 import torch
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from src.models.baseModels.resnet_regression import ResNetModel
 from src.XAI.utils.SaveFiles import PLTSaver
 from torch.utils.data import TensorDataset
 import shap
-# reload shap in case it was modified
-import importlib
-
-importlib.reload(shap)
+from shap import GradientExplainer
 
 class DeepShapResnet:
     def __init__(self, modelWrapper: ResNetModel):
         self.modelWrapper = modelWrapper
         self.fileSaver = PLTSaver(self.__class__.__name__)
 
-    def remove_hooks(self):
+    def __find_last_conv_layer(self, model: torch.nn.Module):
         """
-        Remove existing backward hooks to avoid conflicts with SHAP.
+        Find the last convolutional layer in the model for Grad-CAM.
         """
-        handles = []
-        for name, module in self.modelWrapper.model.named_modules():
-            if hasattr(module, '_backward_hooks'):
-                handle = module._backward_hooks.clear()  # Clear existing hooks
-                handles.append(handle)
-        return handles
+        conv_layer = None
+        for name, module in model.named_modules():
+            if isinstance(module, torch.nn.Conv2d):
+                conv_layer = module
+        print(f"Found {conv_layer} instances of Conv2d layers.") 
+        return conv_layer
 
-    def restore_hooks(self, handles):
+    def generate_shap_values(self, image_count=1, use_test_data=True, save_output=False, save_dir="default", externalEvalData: TensorDataset = None):
         """
-        Restore the backward hooks removed previously.
+        Generate SHAP values for a set of images.
         """
-        for handle in handles:
-            handle.restore()
+        self.fileSaver.set_custom_save_dir(save_dir, save_output)
 
-    def generate_deep_shap(self, index=0, use_test_data=True, externalEvalData: TensorDataset = None, num_background_samples=10):
+        max_image_count = self.modelWrapper.dataLoader.testData.tensors[0].shape[0]
+        count = image_count if image_count <= max_image_count else max_image_count
+
+        # Initialize SHAP GradientExplainer
+        background, _ = next(iter(self.modelWrapper.dataLoader.train_loader))
+        background = background.to(self.modelWrapper.device)[:100]  # Use up to 100 examples for background
+        explainer = shap.GradientExplainer(self.modelWrapper.model, background)
+
+        for i in range(count):
+            self.generate_shap_image(index=i, explainer=explainer, use_test_data=use_test_data, externalEvalData=externalEvalData)
+
+    def generate_shap_image(self, index=0, explainer: GradientExplainer= None, use_test_data=True, externalEvalData: TensorDataset = None):
+        """
+        Generate SHAP visualization for a given input image index from the dataset.
+        """
         if externalEvalData is not None:
             input_image, input_label = self.modelWrapper.get_single_image(externalEvalData, index)
         else:
@@ -41,40 +51,29 @@ class DeepShapResnet:
                 input_image, input_label = self.modelWrapper.get_single_test_image(index)
             else:
                 input_image, input_label = self.modelWrapper.get_single_train_image(index)
-        input_image = input_image.to(self.modelWrapper.device)
-        background = self.modelWrapper.dataLoader.testData.tensors[0][:num_background_samples]
-        background = background.to(self.modelWrapper.device)
 
-        # Remove existing hooks if necessary
-        #hooks = self.remove_hooks()
-
-        # Define SHAP Deep Explainer and generate SHAP values
-        # explainer = shap.GradientExplainer(self.modelWrapper.model, background)
-        explainer = shap.GradientExplainer((self.modelWrapper.model, self.modelWrapper.model.eval()), background)
-
-        shap_values = explainer.shap_values(input_image , nsamples=10)
-        print(shap_values.shape)
-
-
-        #shap_values = explainer.shap_values(input_image)
-
-        # Restore hooks if they were removed before
-        #self.restore_hooks(hooks)
-
-
-
+        # Generate SHAP values
+        shap_values = explainer.shap_values(input_image)
+        shap.image_plot(shap_values[0], -input_image.cpu().numpy())
 
         # Visualization
+        # plt.figure(figsize=(12, 4))
+        # plt.subplot(1, 3, 1)
+        # plt.imshow(input_image.cpu().squeeze(), cmap='gray')
+        # plt.title(f"Input Image (Label: {input_label})")
+        # plt.axis('off')
 
-        # Assuming input_image originally has shape [1, 1, 256, 256] due to unsqueeze and single channel
-        # Removing batch and channel dimensions since it's single-channel grayscale
-        image_for_plot = input_image.cpu().squeeze().numpy() # This will result in shape [256, 256]
-        print(image_for_plot.shape)
-        shap.image_plot(shap_values, image_for_plot)
-        # self.fileSaver.handleSaveImage(index, plt, f"deep_shap_{input_label}")
+        # plt.subplot(1, 3, 2)
+
+        # plt.subplot(1, 3, 3)
+        # # Overlay original image and SHAP heatmap
+        # img_np = input_image.cpu().squeeze().numpy()
+        # shap_np = shap_values[0].sum(0)
+        # plt.imshow(img_np, cmap='gray', interpolation='nearest')
+        # plt.imshow(shap_np, cmap='jet', alpha=0.5, interpolation='nearest')
+        # plt.title("Overlay")
+        # plt.axis('off')
+
+        # self.fileSaver.handleSaveImage(index, plt, f"shap_{input_label}")
+
         # plt.show()
-
-# Example Usage
-# model = ResNetModel(...)
-# deep_shap_resnet = DeepShapResnet(model)
-# deep_shap_resnet.generate_deep_shap(index=10, use_test_data=True)
