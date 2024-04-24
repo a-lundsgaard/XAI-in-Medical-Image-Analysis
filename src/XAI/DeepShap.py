@@ -1,3 +1,4 @@
+import shap.maskers
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,7 +35,7 @@ class DeepShapResnet:
 
         # Initialize SHAP GradientExplainer
         background, _ = next(iter(self.modelWrapper.dataLoader.train_loader))
-        background = background.to(self.modelWrapper.device)[:100]  # Use up to 100 examples for background
+        background = background.to(self.modelWrapper.device)[:1000]  # Use up to 100 examples for background
         explainer = shap.GradientExplainer(self.modelWrapper.model, background)
 
         for i in range(count):
@@ -55,6 +56,7 @@ class DeepShapResnet:
         # Generate SHAP values
         shap_values = explainer.shap_values(input_image)
         shap.image_plot(shap_values[0], -input_image.cpu().numpy())
+        
 
         # Visualization
         # plt.figure(figsize=(12, 4))

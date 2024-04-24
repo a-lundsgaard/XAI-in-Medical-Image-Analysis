@@ -4,7 +4,7 @@ import math
 from src.generators.utils.ImageGenerator import ImageGenerator;
 
 class EnhancedNoisyImageGeneratorRandNoiseShape(ImageGenerator):
-    def __init__(self, num_images, scalar=4, image_size=(256, 256), square_size=15, maxSize=100, minSize=5):
+    def __init__(self, num_images, scalar=1, image_size=(256, 256), square_size=15, maxSize=100, minSize=5):
         self.scalar = scalar
         # Apply the scalar to image size, and shape size parameters
         scaled_image_size = (image_size[0] * scalar, image_size[1] * scalar)
@@ -23,7 +23,7 @@ class EnhancedNoisyImageGeneratorRandNoiseShape(ImageGenerator):
     def generate_images(self):
         gray_values = [50, 100, 150, 200]  # Different grayscale values for each shape
         for _ in range(self.num_images):
-            self.square_size = np.random.randint(20 * self.scalar, 50 * self.scalar)  # Scale the random range for square size
+            self.square_size = np.random.randint(20 * self.scalar, 80 * self.scalar)  # Scale the random range for square size
             overlap = True
             while overlap:
                 shapes_img = np.zeros((self.image_size[1], self.image_size[0]), dtype=np.uint8)
