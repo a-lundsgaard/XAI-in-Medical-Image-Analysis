@@ -1,16 +1,18 @@
-import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
 from src.XAI.VanillaSaliency import VanillaSaliency
 from src.XAI.GradCam import GradCamResnet
 from src.XAI.utils.SaveFiles import PLTSaver
+from src.XAI.utils.BaseXAI import BaseXAI
+from src.models.baseModels.resnet_regression import ResNetModel
+from torch.utils.data import TensorDataset
 
-class GuidedGradCam:
+class GuidedGradCam(BaseXAI):
     def __init__(self, grad_cam: GradCamResnet, vanilla_saliency: VanillaSaliency):
         self.grad_cam = grad_cam
         self.vanilla_saliency = vanilla_saliency
-        self.fileSaver = PLTSaver(self.__class__.__name__)
+        self.modelWrapper = grad_cam.modelWrapper
 
 
     def generate_multiple_guided_grad_cam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default"):
@@ -28,9 +30,9 @@ class GuidedGradCam:
         self.fileSaver.set_custom_save_dir(save_dir, save_output)
 
         for i in range(count):
-            self.generate_guided_grad_cam(index=i, use_test_data=use_test_data, save_output=save_output)
+            self.generate_map(index=i, use_test_data=use_test_data, save_output=save_output)
 
-    def generate_guided_grad_cam(self, index=0, use_test_data=True, save_output=False):
+    def generate_map(self, index=0, use_test_data=True, save_output=False, save_dir=None, externalEvalData: TensorDataset = None, plot=True):
         """
         Generate a Guided Grad-CAM visualization combining Grad-CAM and Vanilla Gradient saliency maps.
         Args:
@@ -39,13 +41,13 @@ class GuidedGradCam:
             save_output (bool): Whether to save the output visualization.
         """
         # Generate Grad-CAM heatmap
-        input_image, input_label = self.grad_cam.modelWrapper.get_single_test_image(index) if use_test_data else self.grad_cam.modelWrapper.get_single_train_image(index)
-        self.grad_cam.generate_grad_cam(index=index)
-        grad_cam_heatmap = self.grad_cam.heatmap  # Assuming heatmap is stored after grad_cam generation
+        input_image, input_label = self.get_image_and_label(index, use_test_data, externalEvalData)
+        
+        self.grad_cam.generate_map(index=index, plot=False)
+        self.vanilla_saliency.generate_map(index=index, plot=False)
 
-        # Generate Vanilla Gradient saliency map
-        self.vanilla_saliency.generate_saliency_map(input_image, input_label, index)
-        vanilla_grad = self.vanilla_saliency.saliency  # Assuming saliency is stored after saliency map generation
+        grad_cam_heatmap = self.grad_cam.heatmap  # Assuming heatmap is stored after grad_cam generation
+        vanilla_grad = self.vanilla_saliency.heatmap  # Assuming saliency is stored after saliency map generation
 
         # Upsample Grad-CAM heatmap to input image size
         grad_cam_heatmap_resized = F.interpolate(
@@ -58,25 +60,26 @@ class GuidedGradCam:
         # Element-wise multiplication of the upsampled Grad-CAM heatmap with the Vanilla Gradient map
         guided_grad_cam = grad_cam_heatmap_resized * vanilla_grad
 
-        # Visualization
-        plt.figure(figsize=(15, 5))
-        plt.subplot(1, 3, 1)
-        plt.imshow(input_image.cpu().squeeze().detach().numpy(), cmap='gray')
-        plt.title("Input Image")
-        plt.axis('off')
+        if plot:
+            # Visualization
+            plt.figure(figsize=(15, 5))
+            plt.subplot(1, 3, 1)
+            plt.imshow(input_image.cpu().squeeze().detach().numpy(), cmap='gray')
+            plt.title("Input Image")
+            plt.axis('off')
 
-        plt.subplot(1, 3, 2)
-        plt.imshow(vanilla_grad.cpu().detach().numpy(), cmap='hot')
-        plt.title("Vanilla Gradient Saliency")
-        plt.axis('off')
+            plt.subplot(1, 3, 2)
+            plt.imshow(vanilla_grad.cpu().detach().numpy(), cmap='hot')
+            plt.title("Vanilla Gradient Saliency")
+            plt.axis('off')
 
-        plt.subplot(1, 3, 3)
-        plt.imshow(guided_grad_cam.cpu().detach().numpy(), cmap='jet')
-        plt.title("Guided Grad-CAM")
-        plt.axis('off')
+            plt.subplot(1, 3, 3)
+            plt.imshow(guided_grad_cam.cpu().detach().numpy(), cmap='jet')
+            plt.title("Guided Grad-CAM")
+            plt.axis('off')
 
-        plt.show()
+            plt.show()
 
-        if save_output:
-            # Save the figure as needed
-            pass  # Implement saving logic based on the setup
+            if save_output and save_dir:
+                self.fileSaver.set_custom_save_dir(save_dir, save_output)
+                self.fileSaver.handleSaveImage(index, plt, f"guided_grad_cam_{input_label}")

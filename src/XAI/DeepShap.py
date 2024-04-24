@@ -1,61 +1,44 @@
 import shap.maskers
-import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from src.models.baseModels.resnet_regression import ResNetModel
 from src.XAI.utils.SaveFiles import PLTSaver
 from torch.utils.data import TensorDataset
 import shap
-from shap import GradientExplainer
+from src.XAI.utils.BaseXAI import BaseXAI
 
-class DeepShapResnet:
+class DeepShapResnet(BaseXAI):
     def __init__(self, modelWrapper: ResNetModel):
         self.modelWrapper = modelWrapper
-        self.fileSaver = PLTSaver(self.__class__.__name__)
 
-    def __find_last_conv_layer(self, model: torch.nn.Module):
-        """
-        Find the last convolutional layer in the model for Grad-CAM.
-        """
-        conv_layer = None
-        for name, module in model.named_modules():
-            if isinstance(module, torch.nn.Conv2d):
-                conv_layer = module
-        print(f"Found {conv_layer} instances of Conv2d layers.") 
-        return conv_layer
-
-    def generate_shap_values(self, image_count=1, use_test_data=True, save_output=False, save_dir="default", externalEvalData: TensorDataset = None):
+    def generate_shap_values(self):
         """
         Generate SHAP values for a set of images.
         """
-        self.fileSaver.set_custom_save_dir(save_dir, save_output)
-
-        max_image_count = self.modelWrapper.dataLoader.testData.tensors[0].shape[0]
-        count = image_count if image_count <= max_image_count else max_image_count
-
         # Initialize SHAP GradientExplainer
         background, _ = next(iter(self.modelWrapper.dataLoader.train_loader))
         background = background.to(self.modelWrapper.device)[:1000]  # Use up to 100 examples for background
         explainer = shap.GradientExplainer(self.modelWrapper.model, background)
 
-        for i in range(count):
-            self.generate_shap_image(index=i, explainer=explainer, use_test_data=use_test_data, externalEvalData=externalEvalData)
+        return explainer
 
-    def generate_shap_image(self, index=0, explainer: GradientExplainer= None, use_test_data=True, externalEvalData: TensorDataset = None):
+
+    def generate_map(self, index=0, use_test_data=True, save_output=False, save_dir=None, externalEvalData: TensorDataset = None, plot=True):
         """
         Generate SHAP visualization for a given input image index from the dataset.
         """
-        if externalEvalData is not None:
-            input_image, input_label = self.modelWrapper.get_single_image(externalEvalData, index)
-        else:
-            if use_test_data:
-                input_image, input_label = self.modelWrapper.get_single_test_image(index)
-            else:
-                input_image, input_label = self.modelWrapper.get_single_train_image(index)
+        input_image, input_label = self.get_image_and_label(index, use_test_data, externalEvalData)
 
-        # Generate SHAP values
+        explainer = self.generate_shap_values()
         shap_values = explainer.shap_values(input_image)
-        shap.image_plot(shap_values[0], -input_image.cpu().numpy())
+        self.heatmap = shap_values
+        
+        if plot:
+            to_explain = input_image.cpu().numpy()
+            # shap.image_plot(shap_values[0], -to_explain, ["Original Image", "SHAP Values"])
+                    # Ensure image is in the correct format (height, width, channels)
+            # Display SHAP values overlaying the original image
+            shap.image_plot(shap_values[0], -to_explain, [f"SHAP Values for Label {input_label}"])
         
 
         # Visualization

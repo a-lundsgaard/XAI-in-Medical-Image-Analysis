@@ -7,50 +7,25 @@ from src.models.baseModels.resnet_regression import ResNetModel
 from src.XAI.utils.SaveFiles import PLTSaver
 from torch import Tensor
 from torch.utils.data import TensorDataset
+from src.XAI.utils.BaseXAI import BaseXAI
 
 
-class GradCamPlusPlus:
+class GradCamPlusPlus(BaseXAI):
     def __init__(self, modelWrapper: ResNetModel):
-        self.modelWrapper = modelWrapper
-        self.fileSaver = PLTSaver(self.__class__.__name__)
-        self.heatmap: Tensor = None
-
-    def __find_last_conv_layer(self, model: torch.nn.Module):
-        conv_layer = None
-        for name, module in model.named_modules():
-            if isinstance(module, torch.nn.Conv2d):
-                conv_layer = module
-        return conv_layer
-    
-    def normalize_map(self, grad_cam_map):
-        min_val = grad_cam_map.min()
-        max_val = grad_cam_map.max()
-        if max_val - min_val > 0:  # Avoid division by zero
-            normalized_map = (grad_cam_map - min_val) / (max_val - min_val)
-        else:
-            normalized_map = torch.zeros_like(grad_cam_map)  # If all values are the same
-        return normalized_map
+        super().__init__(modelWrapper)
 
     def generateMultipleGradCam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default", externalEvalData: TensorDataset = None):
         self.fileSaver.set_custom_save_dir(save_dir, save_output)
         max_image_count = self.modelWrapper.dataLoader.testData.tensors[0].shape[0]
         count = image_count if image_count <= max_image_count else max_image_count
         for i in range(count):
-            self.generate_grad_cam(index=i, use_test_data=use_test_data, externalEvalData=externalEvalData)
+            self.generate_map(index=i, use_test_data=use_test_data, externalEvalData=externalEvalData)
 
-    def generate_grad_cam(self, index=0, use_test_data=True, externalEvalData: TensorDataset = None):
-        if externalEvalData is not None:
-            input_image, input_label = self.modelWrapper.get_single_image(externalEvalData, index)
-        else:
-            if use_test_data:
-                input_image, input_label = self.modelWrapper.get_single_test_image(index)
-            else:
-                input_image, input_label = self.modelWrapper.get_single_train_image(index)
+    def generate_map(self, index=0, use_test_data=True, save_output=False, save_dir=None, externalEvalData: TensorDataset = None, plot=True):
 
-        target_layer = self.__find_last_conv_layer(self.modelWrapper.model)
-        if target_layer is None:
-            print("No convolutional layer found.")
-            return
+        input_image, input_label = self.get_image_and_label(index, use_test_data, externalEvalData)
+
+        target_layer = self.find_last_conv_layer(self.modelWrapper.model)
 
         features = []
         grads = []
@@ -116,25 +91,28 @@ class GradCamPlusPlus:
 
         self.heatmap = heatmap
         heatmap_np = heatmap.cpu().detach().numpy()
+    
+        if plot:
+            plt.figure(figsize=(12, 4))
+            plt.subplot(1, 3, 1)
+            plt.imshow(input_image.cpu().squeeze(), cmap='gray')
+            plt.title(f"Input Image (Label: {input_label})")
+            plt.axis('off')
 
-        plt.figure(figsize=(12, 4))
-        plt.subplot(1, 3, 1)
-        plt.imshow(input_image.cpu().squeeze(), cmap='gray')
-        plt.title(f"Input Image (Label: {input_label})")
-        plt.axis('off')
+            plt.subplot(1, 3, 2)
+            plt.imshow(heatmap_np, cmap='jet')
+            plt.title(f"Grad-CAM++ (Prediction: {round(target.item(), 2)})")
+            plt.axis('off')
 
-        plt.subplot(1, 3, 2)
-        plt.imshow(heatmap_np, cmap='jet')
-        plt.title(f"Grad-CAM++ (Prediction: {round(target.item(), 2)})")
-        plt.axis('off')
+            plt.subplot(1, 3, 3)
+            img_np = input_image.cpu().squeeze().numpy()
+            plt.imshow(img_np, cmap='gray', interpolation='nearest')
+            plt.imshow(heatmap_np, cmap='jet', alpha=0.5, interpolation='nearest')
+            plt.title("Overlay")
+            plt.axis('off')
 
-        plt.subplot(1, 3, 3)
-        img_np = input_image.cpu().squeeze().numpy()
-        plt.imshow(img_np, cmap='gray', interpolation='nearest')
-        plt.imshow(heatmap_np, cmap='jet', alpha=0.5, interpolation='nearest')
-        plt.title("Overlay")
-        plt.axis('off')
+            if save_dir and save_output:
+                self.fileSaver.set_custom_save_dir(save_dir, save_output)
+                self.fileSaver.handleSaveImage(index, plt, f"grad_cam_{input_label}")
 
-        self.fileSaver.handleSaveImage(index, plt, f"grad_cam_{input_label}")
-
-        plt.show()
+            plt.show()

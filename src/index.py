@@ -16,4 +16,4 @@ input_image, input_label = resnet.get_single_test_image(index=0)  # You can chan
 # Check if data was retrieved
 if input_image is not None:
     # Generate and view the saliency map for the selected image and label
-    xai_resnet.generate_saliency_map(input_image, input_label)
+    xai_resnet.generate_map(input_image, input_label)

@@ -7,62 +7,19 @@ from src.models.baseModels.resnet_regression import ResNetModel
 from src.XAI.utils.SaveFiles import PLTSaver
 from torch import Tensor
 from torch.utils.data import TensorDataset
+from src.XAI.utils.BaseXAI import BaseXAI
 
 
-class GradCamResnet:
+class GradCamResnet(BaseXAI):
     def __init__(self, modelWrapper: ResNetModel, layerCount=20):
-        self.modelWrapper = modelWrapper
-        self.fileSaver = PLTSaver(self.__class__.__name__)
-        self.heatmap: Tensor = None
+        super().__init__(modelWrapper)
         self.layerCount = layerCount
-
-    def __find_last_conv_layer(self, model: torch.nn.Module):
-        """
-        Find the last convolutional layer in the model for Grad-CAM.
-        """
-        conv_layer = None
-        instanceCount = 0
-        for name, module in model.named_modules():
-            if isinstance(module, torch.nn.Conv2d):
-                instanceCount += 1
-                conv_layer = module
-                if instanceCount > self.layerCount-1:
-                    break
-        print(f"Found {instanceCount} instances of Conv2d layers.") 
-        return conv_layer
     
-    def generateMultipleGradCam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default", externalEvalData: TensorDataset = None):
-        """
-        Generate Grad-CAM visualization for a set of images.
-        Args:
-            image_count (int): The number of images for which to generate Grad-CAM visualizations.
-        """
-        self.fileSaver.set_custom_save_dir(save_dir, save_output)
+    def generate_map(self, index=0, use_test_data=True, save_output=False, save_dir=None, externalEvalData: TensorDataset = None, plot=True):
+        
+        input_image, input_label = self.get_image_and_label(index, use_test_data, externalEvalData)
 
-        max_image_count = self.modelWrapper.dataLoader.testData.tensors[0].shape[0]
-        count = image_count if image_count <= max_image_count else max_image_count
-
-        for i in range(count):
-            self.generate_grad_cam(index=i, use_test_data=use_test_data, externalEvalData=externalEvalData)
-
-    def generate_grad_cam(self, index=0, use_test_data=True, externalEvalData: TensorDataset = None):
-        """
-        Generate Grad-CAM visualization for a given input image index from the test dataset.
-        """
-        if externalEvalData is not None:
-            input_image, input_label = self.modelWrapper.get_single_image(externalEvalData, index)
-        else:
-            if use_test_data:
-                input_image, input_label = self.modelWrapper.get_single_test_image(index)
-            else:
-                input_image, input_label = self.modelWrapper.get_single_train_image(index)
-
-        # Find the last convolutional layer
-        target_layer = self.__find_last_conv_layer(self.modelWrapper.model)
-        if target_layer is None:
-            print("No convolutional layer found.")
-            return
-
+        target_layer = self.find_last_conv_layer(self.modelWrapper.model)
         # Hook the target layer to access its feature maps and gradients
         features = []
         grads = []
@@ -101,40 +58,18 @@ class GradCamResnet:
             feature_maps[:, i, :, :] *= pooled_gradients[i]
 
         # Generate the heatmap
-        fe_max = torch.max(feature_maps)
         heatmap = torch.mean(feature_maps, dim=1).squeeze()
-        # heatmap = torch.abs(heatmap)  # Use absolute values to consider all activations
-       # heatmap = torch.abs(heatmap)
         max_val = torch.max(heatmap)
 
-        # heatmap = F.relu(heatmap)  # already applying ReLU here
-        #heatmap = F.relu(heatmap)
-        #max_val = torch.max(heatmap)
-        #mean_val = torch.mean(heatmap)
-        print("Max value in heatmap before ReLU is:", max_val)
-        
-
         if max_val > 0:
-            #heatmap = F.relu(heatmap)
             heatmap = F.relu(heatmap)
-            heatmap /= torch.max(heatmap)
+            heatmap /= max_val
         else:
-            # heatmap = torch.zeros_like(heatmap)
-            #heatmap /= heatmap.norm() + 1e-8
-            #heatmap = torch.abs(heatmap)
-            #min_val = torch.min(heatmap)
-            #heatmap += min_val*0.01
-
             min_val = torch.min(heatmap).abs()
             print("Min value in heatmap before ReLU is:", min_val)
             heatmap += min_val*0.01
-            # heatmap *= -1
-            # heatmap = F.relu(heatmap)
             heatmap /= torch.max(heatmap)
             print("Max value in heatmap after ReLU is zero3.")
-
-
-
 
         # Resize heatmap to the input image size
         heatmap = torch.nn.functional.interpolate(
@@ -149,46 +84,46 @@ class GradCamResnet:
         self.heatmap = heatmap
         heatmap_np = heatmap.cpu().detach().numpy()
 
-        """ plt.figure(figsize=(15, 5))
-        plt.subplot(1, 2, 1)
-        plt.imshow(features[-1][0, 0].cpu().detach(), cmap='gray')
-        plt.title("Sample Feature Map")
-
-        plt.subplot(1, 2, 2)
-        feature_gradient = grads[-1][0, 0].cpu().detach()
-        plt.imshow(feature_gradient, cmap='gray')
-        plt.title("Corresponding Gradient Map")
-        plt.show()
-
-        if torch.max(feature_gradient) > 0:
-            feature_gradient /= torch.max(feature_gradient)
-        plt.imshow(feature_gradient, cmap='gray')
-        plt.title("Normalized Gradient Map")
-        plt.show() """
-
-
         # Visualization
-        plt.figure(figsize=(12, 4))
-        plt.subplot(1, 3, 1)
-        plt.imshow(input_image.cpu().squeeze(), cmap='gray')
-        plt.title("Input Image")
-        plt.title(f"Input Image (Label: {input_label})")
+        if plot:
+            plt.figure(figsize=(12, 4))
+            plt.subplot(1, 3, 1)
+            plt.imshow(input_image.cpu().squeeze(), cmap='gray')
+            plt.title("Input Image")
+            plt.title(f"Input Image (Label: {input_label})")
 
-        plt.axis('off')
+            plt.axis('off')
 
-        plt.subplot(1, 3, 2)
-        plt.imshow(heatmap_np, cmap='jet')
-        # plt.title("Grad-CAM")
-        plt.title(f"Grad-CAM (Prediction: {round(target.item(), 2)})")
-        plt.axis('off')
+            plt.subplot(1, 3, 2)
+            plt.imshow(heatmap_np, cmap='jet')
+            # plt.title("Grad-CAM")
+            plt.title(f"Grad-CAM (Prediction: {round(target.item(), 2)})")
+            plt.axis('off')
 
-        plt.subplot(1, 3, 3)
-        img_np = input_image.cpu().squeeze().numpy()
-        plt.imshow(img_np, cmap='gray', interpolation='nearest')
-        plt.imshow(heatmap_np, cmap='jet', alpha=0.5, interpolation='nearest')
-        plt.title("Overlay")
-        plt.axis('off')
+            plt.subplot(1, 3, 3)
+            img_np = input_image.cpu().squeeze().numpy()
+            plt.imshow(img_np, cmap='gray', interpolation='nearest')
+            plt.imshow(heatmap_np, cmap='jet', alpha=0.5, interpolation='nearest')
+            plt.title("Overlay")
+            plt.axis('off')
+            
+            if save_dir and save_output:
+                self.fileSaver.set_custom_save_dir(save_dir, save_output)
+                self.fileSaver.handleSaveImage(index, plt, f"grad_cam_{input_label}")
+            plt.show()
 
-        self.fileSaver.handleSaveImage(index, plt, f"grad_cam_{input_label}")
+    
+    def generateMultipleGradCam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default", externalEvalData: TensorDataset = None):
+        """
+        Generate Grad-CAM visualization for a set of images.
+        Args:
+            image_count (int): The number of images for which to generate Grad-CAM visualizations.
+        """
+        self.fileSaver.set_custom_save_dir(save_dir, save_output)
 
-        plt.show()
+        max_image_count = self.modelWrapper.dataLoader.testData.tensors[0].shape[0]
+        count = image_count if image_count <= max_image_count else max_image_count
+
+        for i in range(count):
+            self.generate_map(index=i, use_test_data=use_test_data, externalEvalData=externalEvalData)
+
