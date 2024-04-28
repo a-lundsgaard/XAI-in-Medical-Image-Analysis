@@ -10,10 +10,9 @@ from torch.utils.data import TensorDataset
 
 class GuidedGradCam(BaseXAI):
     def __init__(self, grad_cam: GradCamResnet, vanilla_saliency: VanillaSaliency):
+        super().__init__(grad_cam.modelWrapper)
         self.grad_cam = grad_cam
         self.vanilla_saliency = vanilla_saliency
-        self.modelWrapper = grad_cam.modelWrapper
-
 
     def generate_multiple_guided_grad_cam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default"):
         """
