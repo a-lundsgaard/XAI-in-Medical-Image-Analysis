@@ -40,10 +40,7 @@ class GradCamResnet(BaseXAI):
         self.modelWrapper.model.zero_grad()
 
         # Backward pass
-        if self.modelWrapper.model.fc.out_features == 1:  # Regression
-            target: Tensor = output
-        else:  # Classification
-            target = output.argmax(dim=1)
+        target: Tensor = output
         target.backward()
 
         # Remove hooks
@@ -108,6 +105,7 @@ class GradCamResnet(BaseXAI):
             plt.axis('off')
             
             if save_dir and save_output:
+                print("Saving image")
                 self.fileSaver.set_custom_save_dir(save_dir, save_output)
                 self.fileSaver.handleSaveImage(index, plt, f"grad_cam_{input_label}")
             plt.show()
