@@ -14,7 +14,8 @@ from src.dataLoaders.DataLoader import DataSetLoader
 class ResNetModel:
     def __init__(self, num_epochs, learning_rate, weight_decay, early_stopping_tol, early_stopping_min_delta, 
                  image_size=(256, 256), batch_size=32, depth=18, data_dir = '../../artificial_data/noisy_generated_images',
-                 dataLoader: DataSetLoader = None
+                 dataLoader: DataSetLoader = None,
+                 dropout_rate=None
                  ):
         self.num_epochs = num_epochs
 
@@ -45,7 +46,15 @@ class ResNetModel:
                                      bias=False)
             
         num_features = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
+
+        if dropout_rate:
+            self.model.fc = nn.Sequential(
+                nn.Dropout(dropout_rate),
+                nn.Linear(num_features, 1)
+            )
+        else:
+            self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
+
         self.model.to(self.device)
 
         # Loss and optimizer
