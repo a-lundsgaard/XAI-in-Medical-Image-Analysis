@@ -60,7 +60,7 @@ class ModifiedGradCam:
         hook_b.remove()
 
         gradients = grads[0]
-        pooled_gradients = torch.mean(gradients, dim=[0, 2, 3]).abs()
+        pooled_gradients = torch.mean(gradients, dim=[0, 2, 3])
         feature_maps = features[0]
         # feature_maps = feature_maps.abs()
         for i in range(feature_maps.shape[1]):
@@ -69,6 +69,7 @@ class ModifiedGradCam:
         heatmap = torch.mean(feature_maps, dim=1).squeeze()
         #heatmap = F.relu(heatmap)  # Use ReLU to only consider positive influences
         max_val = torch.max(heatmap)
+        print("Max value in heatmap before ReLU is:", max_val)
         #heatmap /= torch.max(heatmap)  # Normalize the heatmap
         if max_val > 0:
             heatmap = F.relu(heatmap)
@@ -82,6 +83,7 @@ class ModifiedGradCam:
             # heatmap *= -  1
             heatmap = F.relu(heatmap)
             heatmap /= torch.max(heatmap)
+            print("Alternative calc")
 
         # Resize heatmap to the input image size
         heatmap = F.interpolate(heatmap.unsqueeze(0).unsqueeze(0),

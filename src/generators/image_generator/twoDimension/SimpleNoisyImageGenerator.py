@@ -10,10 +10,17 @@ class SimpleNoisyImageGenerator(ImageGenerator):
     ensuring they do not overlap, with fixed circle sizes (labels) in grayscale. 
     The shapes are not semi-transparent and the background blur does not rotate with the shapes.
     """
-    def __init__(self, num_images, image_size=(256, 256), square_size=50, minSize=5, maxSize=100):
+    def __init__(self, num_images, image_size=(256, 256), square_size=50, minSize=8, maxSize=25):
         super().__init__(num_images, image_size, maxSize, minSize)
         self.square_size = square_size
+        self.square_sizes = []
         # Assuming self.fixed_labels is defined elsewhere in the class or inherited.
+
+    def calculate_correlation(self):
+        # Calculate Pearson correlation coefficient
+        correlation_matrix = np.corrcoef(self.labels, self.square_sizes)
+        correlation_coefficient = correlation_matrix[0, 1]
+        print("Correlation coefficient between circle size and square size:", correlation_coefficient)
 
     def generate_images(self):
         for _ in range(self.num_images):
@@ -45,8 +52,8 @@ class SimpleNoisyImageGenerator(ImageGenerator):
 
             # Draw the square and circle in white on the shapes image
             cv2.rectangle(shapes_img, (square_center[0] - self.square_size // 2, square_center[1] - self.square_size // 2),
-                          (square_center[0] + self.square_size // 2, square_center[1] + self.square_size // 2), 255, -1)
-            cv2.circle(shapes_img, circle_center, circle_radius, 255, -1)
+                          (square_center[0] + self.square_size // 2, square_center[1] + self.square_size // 2), 100, -1)
+            cv2.circle(shapes_img, circle_center, circle_radius, 100, -1)
 
             # Rotate shapes
             angle = np.random.randint(0, 360)
@@ -56,7 +63,7 @@ class SimpleNoisyImageGenerator(ImageGenerator):
             # Find contours in the rotated shapes image to copy shapes onto the background
             contours, _ = cv2.findContours(rotated_shapes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for cnt in contours:
-                cv2.drawContours(background, [cnt], 0, 255, -1)
+                cv2.drawContours(background, [cnt], 0, 100, -1)
 
             # The background now has the shapes drawn onto it directly
             img = background
@@ -64,3 +71,4 @@ class SimpleNoisyImageGenerator(ImageGenerator):
             # Add the grayscale image with solid shapes and non-rotated blur background, and its label to the list
             self.images.append(img)
             self.labels.append(circle_radius)
+            self.square_sizes.append(self.square_size)
