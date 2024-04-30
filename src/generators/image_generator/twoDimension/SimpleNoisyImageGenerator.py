@@ -13,7 +13,14 @@ class SimpleNoisyImageGenerator(ImageGenerator):
     def __init__(self, num_images, image_size=(256, 256), square_size=50, minSize=8, maxSize=25):
         super().__init__(num_images, image_size, maxSize, minSize)
         self.square_size = square_size
+        self.square_sizes = []
         # Assuming self.fixed_labels is defined elsewhere in the class or inherited.
+
+    def calculate_correlation(self):
+        # Calculate Pearson correlation coefficient
+        correlation_matrix = np.corrcoef(self.labels, self.square_sizes)
+        correlation_coefficient = correlation_matrix[0, 1]
+        print("Correlation coefficient between circle size and square size:", correlation_coefficient)
 
     def generate_images(self):
         for _ in range(self.num_images):
@@ -64,3 +71,4 @@ class SimpleNoisyImageGenerator(ImageGenerator):
             # Add the grayscale image with solid shapes and non-rotated blur background, and its label to the list
             self.images.append(img)
             self.labels.append(circle_radius)
+            self.square_sizes.append(self.square_size)
