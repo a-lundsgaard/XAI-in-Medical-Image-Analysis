@@ -10,7 +10,7 @@ class SimpleNoisyImageGenerator(ImageGenerator):
     ensuring they do not overlap, with fixed circle sizes (labels) in grayscale. 
     The shapes are not semi-transparent and the background blur does not rotate with the shapes.
     """
-    def __init__(self, num_images, image_size=(256, 256), square_size=50, minSize=5, maxSize=100):
+    def __init__(self, num_images, image_size=(256, 256), square_size=50, minSize=8, maxSize=25):
         super().__init__(num_images, image_size, maxSize, minSize)
         self.square_size = square_size
         self.square_sizes = []

@@ -25,9 +25,10 @@ class PLTSaver:
         """
         path = self.getDataDir()
         if self.save_output:
-            if os.path.exists(path):
-                shutil.rmtree(path)
-            os.makedirs(path)
+            if not os.path.exists(path):
+                os.makedirs(path)
+                #shutil.rmtree(path)
+            #os.makedirs(path)
     
     def handleSaveImage(self, id, plt: plt, name):
         """
@@ -38,4 +39,5 @@ class PLTSaver:
         - label: Label of the image.
         """
         if self.save_output:
+            print("save name: ",f"{self.getDataDir()}/{id}_{name}.png")
             plt.savefig(f"{self.getDataDir()}/{id}_{name}.png")
