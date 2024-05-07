@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 import nibabel as nib
 from sklearn.model_selection import train_test_split
+from scipy.ndimage import zoom
 
 class NiftiDataLoader:
     def __init__(self, data_dir, image_size=(256, 256), batch_size=32):
@@ -31,6 +32,7 @@ class NiftiDataLoader:
                 if len(img_slices) == 3:  # Ensuring there are exactly three slices
                     # Stack slices along a new dimension to form multi-channel input
                     multi_channel_image = np.stack(img_slices, axis=0)
+                    print(f"\nMulti-channel image shape: {multi_channel_image.shape}")
                     images.append(multi_channel_image)
                     labels.append(label)
 
@@ -57,15 +59,46 @@ class NiftiDataLoader:
         img = (img - np.min(img)) / (np.max(img) - np.min(img))
         return img
 
+    # def extract_slices(self, img):
+    #     c, h, w = img.shape
+    #     # Extract middle slices from each axis
+    #     axial = img[c//2, :, :]
+    #     coronal = img[:, h//2, :]
+    #     sagittal = img[:, :, w//2]
+    #     return [axial, coronal, sagittal]
+
+    def resize_slice(self, slice, target_shape=(256, 256)):
+        """
+        Resize a single slice to the target shape using cubic interpolation.
+        """
+        # Calculate the zoom factors for each dimension.
+        zoom_factors = [n / o for n, o in zip(target_shape, slice.shape)]
+        # Use scipy's zoom function to resize the array.
+        resized_slice = zoom(slice, zoom_factors, order=3)  # Cubic interpolation
+        return resized_slice
+    
     def extract_slices(self, img):
         c, h, w = img.shape
         # Extract middle slices from each axis
         axial = img[c//2, :, :]
         coronal = img[:, h//2, :]
         sagittal = img[:, :, w//2]
+
+        # Debug output before resizing
+        # print(f"Original Axial shape: {axial.shape}, Coronal shape: {coronal.shape}, Sagittal shape: {sagittal.shape}")
+
+        # Resize slices to a common shape (e.g., 256x256)
+        target_shape = (256, 256)
+        axial = self.resize_slice(axial, target_shape)
+        coronal = self.resize_slice(coronal, target_shape)
+        sagittal = self.resize_slice(sagittal, target_shape)
+
+        # Debug output after resizing
+        # print(f"Resized Axial shape: {axial.shape}, Coronal shape: {coronal.shape}, Sagittal shape: {sagittal.shape}")
+
         return [axial, coronal, sagittal]
 
     def extract_label(self, filename):
         # Example label extraction, assuming label is part of the filename
-        return int(filename.split('_')[-1].split('.')[0])
-
+        # return int(filename.split('_')[-1].split('.')[0])
+        return 0
