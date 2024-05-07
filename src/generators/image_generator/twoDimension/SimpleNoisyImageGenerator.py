@@ -24,8 +24,8 @@ class SimpleNoisyImageGenerator(ImageGenerator):
 
     def generate_images(self):
         for _ in range(self.num_images):
-            self.square_size = np.random.randint(20, 50)
             while True:
+                self.square_size = np.random.randint(self.minSize*2, self.maxSize*2)
                 # Create a blank grayscale image for shapes
                 shapes_img = np.zeros((self.image_size[1], self.image_size[0]), dtype=np.uint8)
 
@@ -53,7 +53,7 @@ class SimpleNoisyImageGenerator(ImageGenerator):
             # Draw the square and circle in white on the shapes image
             cv2.rectangle(shapes_img, (square_center[0] - self.square_size // 2, square_center[1] - self.square_size // 2),
                           (square_center[0] + self.square_size // 2, square_center[1] + self.square_size // 2), 100, -1)
-            cv2.circle(shapes_img, circle_center, circle_radius, 100, -1)
+            cv2.circle(shapes_img, circle_center, circle_radius, 255, -1)
 
             # Rotate shapes
             angle = np.random.randint(0, 360)
@@ -63,7 +63,7 @@ class SimpleNoisyImageGenerator(ImageGenerator):
             # Find contours in the rotated shapes image to copy shapes onto the background
             contours, _ = cv2.findContours(rotated_shapes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for cnt in contours:
-                cv2.drawContours(background, [cnt], 0, 100, -1)
+                cv2.drawContours(background, [cnt], 0, 255, -1)
 
             # The background now has the shapes drawn onto it directly
             img = background
