@@ -85,7 +85,7 @@ class NiftiDataLoader:
         sagittal = img[:, :, w//2]
 
         # Debug output before resizing
-        print(f"Original Axial shape: {axial.shape}, Coronal shape: {coronal.shape}, Sagittal shape: {sagittal.shape}")
+        # print(f"Original Axial shape: {axial.shape}, Coronal shape: {coronal.shape}, Sagittal shape: {sagittal.shape}")
 
         # Resize slices to a common shape (e.g., 256x256)
         target_shape = (256, 256)
@@ -94,7 +94,7 @@ class NiftiDataLoader:
         sagittal = self.resize_slice(sagittal, target_shape)
 
         # Debug output after resizing
-        print(f"Resized Axial shape: {axial.shape}, Coronal shape: {coronal.shape}, Sagittal shape: {sagittal.shape}")
+        # print(f"Resized Axial shape: {axial.shape}, Coronal shape: {coronal.shape}, Sagittal shape: {sagittal.shape}")
 
         return [axial, coronal, sagittal]
 
