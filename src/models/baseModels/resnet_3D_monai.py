@@ -71,11 +71,12 @@ class MedicalResNetModel:
 
     def train(self):
 
+        self.data_loader.run_replacement_thread()
         self.model.train()
         for epoch in range(self.num_epochs):
             # self.model.train()
             running_loss = 0.0
-            running_val_loss = 0.0
+            running_val_loss = 0.0 
 
             for batch_data in self.data_loader.train_loader:
                 # images, labels = batch_data["image"].to(self.device), batch_data["label"].to(self.device)
@@ -92,21 +93,25 @@ class MedicalResNetModel:
                 # images = batch_data["image"]
                 # labels = batch_data["label"] # Ensure labels are float32
 
-                print(f"Images shape: {images.shape}")
-                print(f"Labels: {labels}")
+                # print(f"Images shape: {images.shape}")
+                # print(f"Labels: {labels}")
 
                 self.optimizer.zero_grad()
                 outputs = self.model(images)
-                print(f"Outputs shape: {outputs}")
+                # print(f"Outputs shape: {outputs}")
 
                 loss: Tensor = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
                 running_loss += loss.item()
+                # self.data_loader.
                 # running_val_loss += self.validation_loss()
-
+            self.data_loader.update_cache()
             print(
                 f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_loss/len(self.data_loader.train_loader)}")
+        self.data_loader.shutdown_cache()
+
+        
 
     def evaluate(self):
         self.model.eval()
