@@ -81,33 +81,34 @@ class MedicalResNetModel:
         print("Is cuda available: ", torch.cuda.is_available())
 
         for epoch in range(self.num_epochs):
-            print("Setting model to train mode")
+            # print("Setting model to train mode")
             self.model.train()
             running_loss = 0.0
             running_val_loss = 0.0
 
             # print batch size and number of batches
-            print("Number of batches: ", len(self.data_loader.train_loader)) 
+            # print("Number of batches: ", len(self.data_loader.train_loader)) 
 
             for batch_data in self.data_loader.train_loader:
 
-                print("Moving images and labels to device")
+                # print("Moving images and labels to device")
                 images = batch_data["image"].to(self.device)
                 labels = batch_data["label"].float().to(self.device)
 
+
                 self.optimizer.zero_grad()
-                print("Performing forward pass...")
-                outputs = self.model(images).flatten()
-                print("Forward pass outputs: ", outputs)
+                # print("Performing forward pass...")
+                outputs = self.model(images).flatten() # Flatten the output to match the shape of the labels
+                # print("Forward pass outputs: ", outputs)
                 loss: Tensor = self.criterion(outputs, labels)
-                print("Performing backward pass...")
+                # print("Performing backward pass...")
                 loss.backward()
-                print("Performing optimizer step")
+                # print("Performing optimizer step")
                 self.optimizer.step()
                 running_loss += loss.item()
-                print("Performing validation loss...")
+                # print("Performing validation loss...")
                 running_val_loss += self.validation_loss()
-                print("Finishing batch")
+                # print("Finishing batch")
 
             self.data_loader.update_cache()
             # print( f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_loss/len(self.data_loader.train_loader)}")
@@ -123,12 +124,11 @@ class MedicalResNetModel:
         r2_metric = R2Score().to(self.device)
         with torch.no_grad():
             for batch_data in self.data_loader.test_loader:
-                images, labels = batch_data["image"].to(
-                    self.device), batch_data["label"].to(self.device)
-                outputs = self.model(images)
-                predicted = outputs.flatten()
+                images = batch_data["image"].to(self.device)
+                labels = batch_data["label"].float().to(self.device)
+                predicted = self.model(images).flatten()
 
-                loss = self.criterion(outputs, labels)
+                loss = self.criterion(predicted, labels)
                 total_loss += loss.item()
                 r2_metric.update(predicted, labels)
 
