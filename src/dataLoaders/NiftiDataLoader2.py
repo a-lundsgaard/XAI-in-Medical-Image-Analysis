@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from monai.data import CacheDataset, DataLoader, SmartCacheDataset, PersistentDataset, Dataset, GDSDataset
+from monai.data import CacheDataset, DataLoader, SmartCacheDataset, PersistentDataset, Dataset, GDSDataset, ThreadDataLoader
 from monai.transforms import Compose, LoadImaged, EnsureChannelFirstD, ScaleIntensityd, ToTensord, ResizeD
 from sklearn.model_selection import train_test_split
 from typing import List, Dict
@@ -71,9 +71,9 @@ class NiftiDataLoader:
                 self.val_ds = self.create_smart_cache_dataset(self.val_data, val_indices, self.cache_rate)
                 self.test_ds = self.create_smart_cache_dataset(self.test_data, test_indices, self.cache_rate)
             elif cache == "persistent":
-                self.train_ds = self.create_persistent_cache_dataset(self.train_data, train_indices)
-                self.val_ds = self.create_persistent_cache_dataset(self.val_data, val_indices)
-                self.test_ds = self.create_persistent_cache_dataset(self.test_data, test_indices)
+                self.train_ds = self.create_persistent_cache_dataset(self.train_data, train_indices, "train")
+                self.val_ds = self.create_persistent_cache_dataset(self.val_data, val_indices, "val")
+                self.test_ds = self.create_persistent_cache_dataset(self.test_data, test_indices, "test")
             else:
                 self.train_ds = Dataset(data=[self.train_data[i] for i in train_indices], transform=self.transforms)
                 self.val_ds = Dataset(data=[self.val_data[i] for i in val_indices], transform=self.transforms)
@@ -88,11 +88,11 @@ class NiftiDataLoader:
         cache_num = int(len(subset_data) * cache_rate)
         return SmartCacheDataset(data=subset_data, transform=self.transforms, cache_num=cache_num, replace_rate=0.2, num_replace_workers=4)
     
-    def create_persistent_cache_dataset(self, data, indices):
+    def create_persistent_cache_dataset(self, data, indices, data_prefix: str):
         subset_data = [data[i] for i in indices]
         cache_num = int(len(subset_data))
         print(f"Cache num: {cache_num}")
-        return GDSDataset(data=subset_data, transform=self.transforms, cache_dir="./cache", device=self.device)
+        return PersistentDataset(data=subset_data, transform=self.transforms, cache_dir="./cache/" + data_prefix)
  
 
     def get_image_path(self, row: pd.Series, side: str, visit: str):
@@ -148,9 +148,9 @@ class NiftiDataLoader:
         ])
     
     def get_dataloaders(self):
-        self.train_loader = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
-        self.val_loader = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
-        self.test_loader = DataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False)
+        self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
+        self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
+        self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False)
 
         """     def get_dataloaders(self, subset_size: int = None):
         if subset_size is not None:

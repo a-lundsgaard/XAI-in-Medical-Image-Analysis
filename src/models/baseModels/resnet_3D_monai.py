@@ -62,53 +62,57 @@ class MedicalResNetModel:
 
     def validation_loss(self):
         self.model.eval()
+        total_loss = 0
+        count = 0
         with torch.no_grad():
-            for images, labels in self.data_loader.val_loader:
-                images, labels = images.to(self.device), labels.to(self.device)
+            for batch_data in self.data_loader.val_loader:
+                images = batch_data["image"].to(self.device)
+                labels = batch_data["label"].float().to(self.device)
                 outputs = self.model(images).flatten()
                 loss = self.criterion(outputs, labels.float())
-                return loss.item()
+                total_loss += loss.item()
+                count += 1
+        average_loss = total_loss / count if count > 0 else 0
+        return average_loss
 
     def train(self):
 
         self.data_loader.run_replacement_thread()
-        self.model.train()
+        print("Is cuda available: ", torch.cuda.is_available())
+
         for epoch in range(self.num_epochs):
-            # self.model.train()
+            print("Setting model to train mode")
+            self.model.train()
             running_loss = 0.0
-            running_val_loss = 0.0 
+            running_val_loss = 0.0
+
+            # print batch size and number of batches
+            print("Number of batches: ", len(self.data_loader.train_loader)) 
 
             for batch_data in self.data_loader.train_loader:
-                # images, labels = batch_data["image"].to(self.device), batch_data["label"].to(self.device)
 
-                # print(f"Batch data: {batch_data}")
-
-                # print(f"Batch data image: {batch_data['image']}")
-
+                print("Moving images and labels to device")
                 images = batch_data["image"].to(self.device)
                 labels = batch_data["label"].float().to(self.device)
-                # labels = batch_data["label"].to(
-                #     self.device)  # Ensure labels are float32
-
-                # images = batch_data["image"]
-                # labels = batch_data["label"] # Ensure labels are float32
-
-                # print(f"Images shape: {images.shape}")
-                # print(f"Labels: {labels}")
 
                 self.optimizer.zero_grad()
-                outputs = self.model(images)
-                # print(f"Outputs shape: {outputs}")
-
+                print("Performing forward pass...")
+                outputs = self.model(images).flatten()
+                print("Forward pass outputs: ", outputs)
                 loss: Tensor = self.criterion(outputs, labels)
+                print("Performing backward pass...")
                 loss.backward()
+                print("Performing optimizer step")
                 self.optimizer.step()
                 running_loss += loss.item()
-                # self.data_loader.
-                # running_val_loss += self.validation_loss()
+                print("Performing validation loss...")
+                running_val_loss += self.validation_loss()
+                print("Finishing batch")
+
             self.data_loader.update_cache()
-            print(
-                f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_loss/len(self.data_loader.train_loader)}")
+            # print( f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_loss/len(self.data_loader.train_loader)}")
+            print(f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_loss/len(self.data_loader.train_loader)}, Val Loss: {running_val_loss/len(self.data_loader.val_loader)}")
+
         self.data_loader.shutdown_cache()
 
         

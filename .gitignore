@@ -9,3 +9,6 @@ datasets/
 
 # ignore outputs folder
 outputs/
+
+# ignore logs folder
+cache/
