@@ -3,7 +3,8 @@ from monai.config import KeysCollection
 import numpy as np
 
 class SliceAggregateTransform(MapTransform):
-    def __init__(self, keys: KeysCollection, allow_missing_keys: bool = False):
+    def __init__(self, keys: KeysCollection, slices=3, allow_missing_keys: bool = False):
+        self.slices = slices
         super().__init__(keys, allow_missing_keys)
     
     def __call__(self, data):
@@ -16,9 +17,34 @@ class SliceAggregateTransform(MapTransform):
             if img_data.ndim == 4 and img_data.shape[0] == 1:
                 img_data = img_data[0]
             
-            combined_images = self.slice_and_aggregate(img_data)
+            combined_images = self.slice_and_aggregate_3_channel(img_data) if self.slices == 3 else self.slice_and_aggregate(img_data)
             d[key] = combined_images
         return d
+    
+    def slice_and_aggregate_3_channel(self, img_data):
+        """
+        Slices the 3D image from all three directions and aggregates them into a single 3-channel image.
+        """
+        # Ensure the image data is 3D (mri data)
+        if img_data.ndim != 3:
+            raise ValueError(f"Expected 3D image data, but got {img_data.ndim}D data.")
+
+        depth, height, width = img_data.shape
+
+        # Validate dimensions to avoid index errors
+        if depth < 3 or height < 3 or width < 3:
+            raise ValueError(f"Image data is too small to slice: {img_data.shape}")
+
+        # Slicing from different directions
+        axial_slice = img_data[:, :, width // 2]
+        coronal_slice = img_data[:, height // 2, :]
+        sagittal_slice = img_data[depth // 2, :, :]
+
+        # Stack each slice into a single 3-channel image
+        combined_image = np.stack((axial_slice, coronal_slice, sagittal_slice), axis=0)
+
+        return combined_image
+
     
     def slice_and_aggregate(self, img_data):
         """
