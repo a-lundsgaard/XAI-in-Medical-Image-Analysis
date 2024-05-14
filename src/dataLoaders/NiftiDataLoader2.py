@@ -106,8 +106,7 @@ class NiftiDataLoader:
         subset_data = [data[i] for i in indices]
         cache_num = int(len(subset_data))
         print(f"Cache num: {cache_num}")
-        return PersistentDataset(data=subset_data, transform=self.transforms, cache_dir="./cache/" + data_prefix)
- 
+        return PersistentDataset(data=subset_data, transform=self.transforms, cache_dir="./cache/" + data_prefix) 
 
     def get_image_path(self, row: pd.Series, side: str, visit: str):
         return os.path.join(self.data_dir, f"{row.name}-{side}-{visit}.nii.gz")
