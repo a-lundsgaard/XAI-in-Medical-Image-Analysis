@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from src.dataLoaders.NiftiDataLoader2 import NiftiDataLoader
 from torchvision.models import ResNet, resnet18, resnet34, resnet50
+from torchvision import models
 from src.models.medical_models.base_medical import MedicalResNetModelBase
 
 
@@ -12,11 +13,11 @@ class MedicalResNetModel(MedicalResNetModelBase):
 
     def set_model(self):
         if self.depth == 18:
-            self.model = resnet18(num_classes=1)
+            self.model = resnet18(weights=models.ResNet18_Weights.DEFAULT)
         elif self.depth == 34:
-            self.model = resnet34(num_classes=1)
+            self.model = resnet34(weights=models.ResNet18_Weights.DEFAULT)
         elif self.depth == 50:
-            self.model = resnet50(num_classes=1)
+            self.model = resnet50(weights=models.ResNet18_Weights.DEFAULT)
         else:
             raise ValueError("Unsupported depth for ResNet. Choose from 18, 34, 50.")
         
