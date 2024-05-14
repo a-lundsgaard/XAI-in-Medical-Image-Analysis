@@ -12,27 +12,19 @@ class MedicalResNetModel(MedicalResNetModelBase):
         super().__init__(num_epochs, data_loader, learning_rate, weight_decay, dropout_rate, depth, pretrained=False)
 
     def set_model(self):
-        self.model: ResNet = None
+        model = None
         if self.depth == 18:
-            self.model = resnet18(weights=models.ResNet18_Weights.DEFAULT)
+            model = resnet18(weights=models.ResNet18_Weights.DEFAULT)
         elif self.depth == 34:
-            self.model = resnet34(weights=models.ResNet18_Weights.DEFAULT)
+            model = resnet34(weights=models.ResNet18_Weights.DEFAULT)
         elif self.depth == 50:
-            self.model = resnet50(weights=models.ResNet18_Weights.DEFAULT)
+            model = resnet50(weights=models.ResNet18_Weights.DEFAULT)
         else:
             raise ValueError("Unsupported depth for ResNet. Choose from 18, 34, 50.")
         
-        if torch.cuda.is_available():
-            self.device = torch.device("cuda")
-        elif torch.backends.mps.is_available():
-            self.device = torch.device("mps")
-        else:
-            self.device = torch.device("cpu")
-
+        self.model = model
+        
         out_channels = self.model.conv1.out_channels
         self.model.conv1 = nn.Conv2d(self.n_input_channels, out_channels, kernel_size=self.model.conv1.kernel_size, 
                                      stride=self.model.conv1.stride, padding=self.model.conv1.padding, 
                                      bias=False)
-        self.model.to(self.device)
-        
-

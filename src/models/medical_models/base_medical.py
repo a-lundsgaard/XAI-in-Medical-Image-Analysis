@@ -20,13 +20,14 @@ class MedicalResNetModelBase(ABC):
                  dropout_rate=None,
                  depth=18,
                  pretrained=True,
+                 model = None
                  ):
 
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.data_loader: NiftiDataLoader = data_loader
-        self.model: Any = None
+        self.model = model
         self.pretrained = pretrained
 
         self.depth: int = depth
@@ -46,17 +47,32 @@ class MedicalResNetModelBase(ABC):
         self.n_input_channels = images.shape[1]
         print("Number of input channels: ", self.n_input_channels)
 
+                # Device setup
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        elif torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+        else:
+            self.device = torch.device("cpu")
+
         self.set_model()
         self.load_weights()
 
         num_features = self.model.fc.in_features
         if dropout_rate:
-            self.model.fc = nn.Sequential(
+            self.model.fc = nn.Sequential(  
                 nn.Dropout(dropout_rate),
                 nn.Linear(num_features, 1)
             )
         else:
             self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
+
+        
+
+        self.model.to(self.device)
+
+        print("gpu: ", next(self.model.parameters()).device)
+
         
         # Loss and optimizer
         self.criterion = nn.MSELoss()
@@ -138,7 +154,7 @@ class MedicalResNetModelBase(ABC):
     def train(self):
 
         self.data_loader.run_replacement_thread()
-        print("Is cuda available: ", torch.cuda.is_available())
+        print("Is cuda available: ", torch.cuda.is_available(), self.device)
 
         for epoch in range(self.num_epochs):
             # print("Setting model to train mode")
