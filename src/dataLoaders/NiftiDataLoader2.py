@@ -123,13 +123,14 @@ class NiftiDataLoader:
             image_path_right = self.get_image_path(row, right, visit)
             image_path_left = self.get_image_path(row, left, visit)
 
-            # Target label
-            label = row[visit + self.meta_data_loader.metricDict["AGE"]]
+            # label = row[visit + self.meta_data_loader.metricDict["AGE"]]
+            label_right_knee = row[visit + "WOMKPR"]
+            label_left_knee = row[visit + "WOMKPL"]
 
             if os.path.exists(image_path_left):
-                data_list.append({'image': image_path_left, 'label': label})
+                data_list.append( {'image': image_path_left, 'label': label_left_knee})
             if os.path.exists(image_path_right):
-                data_list.append({'image': image_path_right,'label': label})
+                data_list.append({'image': image_path_right,'label': label_right_knee})
         
         print(f"Total images detected: {len(data_list)}")
         print(f"Total images: {data_list[:5]}")
