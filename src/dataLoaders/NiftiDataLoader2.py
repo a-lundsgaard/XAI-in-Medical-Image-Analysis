@@ -22,6 +22,7 @@ class NiftiDataLoader:
             val_size=0.1,
             batch_size=2,
             cache_rate=0.5,
+            replace_rate=0.2,
             meta_data_loader = PatientDataProcessor,
             # custom_transforms: list[MapTransform] = None  # Allow passing custom transforms
             spatial_size: Tuple[int, int, int] | Tuple[int, int] = (128, 128, 128),
@@ -35,6 +36,7 @@ class NiftiDataLoader:
             self.meta_data_loader = meta_data_loader
             self.custom_transforms = custom_transforms
             self.spatial_size = spatial_size
+            self.replace_rate = replace_rate
 
             self.val_loader: DataLoader = None
             self.train_loader: DataLoader = None
@@ -77,13 +79,18 @@ class NiftiDataLoader:
 
         if subset_size is not None:
             train_indices = np.random.permutation(len(self.train_data))[:subset_size]
-            val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size)]
-            test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size)]
+            val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size*self.cache_rate)]
+            test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size*self.cache_rate)]
+
+            # print length of train, val, and test indices
+            print(f"Train indices length: {len(self.train_data)}, cache length {subset_size*self.cache_rate}")
+            print(f"Val indices length: {len(val_indices)}")
+            print(f"Test indices length: {len(test_indices)}")
 
             if cache == "smart":
-                self.train_ds = self.create_smart_cache_dataset(self.train_data, train_indices, self.cache_rate)
-                self.val_ds = self.create_smart_cache_dataset(self.val_data, val_indices, self.cache_rate)
-                self.test_ds = self.create_smart_cache_dataset(self.test_data, test_indices, self.cache_rate)
+                self.train_ds = self.create_smart_cache_dataset(self.train_data, train_indices, cache_rate=self.cache_rate, replace_rate=self.replace_rate)
+                self.val_ds = self.create_cache_dataset(self.val_data, val_indices)
+                self.test_ds = self.create_cache_dataset(self.test_data, test_indices)
             elif cache == "persistent":
                 self.train_ds = self.create_persistent_cache_dataset(self.train_data, train_indices, "train")
                 self.val_ds = self.create_persistent_cache_dataset(self.val_data, val_indices, "val")
@@ -97,10 +104,17 @@ class NiftiDataLoader:
         self.get_dataloaders()
 
             # Using SmartCacheDataset with subset
-    def create_smart_cache_dataset(self, data, indices, cache_rate= 0.5):
+    def create_smart_cache_dataset(self, data, indices, cache_rate= 0.5, replace_rate=0.2):
         subset_data = [data[i] for i in indices]
+        # print length of subset data
+        print(f"Subset data length: {len(subset_data)}")
         cache_num = int(len(subset_data) * cache_rate)
-        return SmartCacheDataset(data=subset_data, transform=self.transforms, cache_num=cache_num, replace_rate=0.2, num_replace_workers=4)
+        print(f"Cache num: {cache_num}")
+        return SmartCacheDataset(data=subset_data, transform=self.transforms, cache_num=cache_num, replace_rate=replace_rate, num_replace_workers=os.cpu_count())
+    
+    def create_cache_dataset(self, data, indices):
+        subset_data = [data[i] for i in indices]
+        return CacheDataset(data=subset_data, transform=self.transforms)
     
     def create_persistent_cache_dataset(self, data, indices, data_prefix: str):
         subset_data = [data[i] for i in indices]
