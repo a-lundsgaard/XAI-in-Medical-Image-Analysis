@@ -12,3 +12,5 @@ outputs/
 
 # ignore logs folder
 cache/
+
+weights/

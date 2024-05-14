@@ -1,12 +1,17 @@
-from monai.networks.nets import ResNet, resnet18, resnet34, resnet50
+# from monai.networks.nets import ResNet, resnet18, resnet34, resnet50
 import torch
 import torch.nn as nn
 from src.dataLoaders.NiftiDataLoader2 import NiftiDataLoader
 from torcheval.metrics import R2Score
 from torch import Tensor
 
+from torchvision.models import ResNet
+from abc import ABC, abstractmethod
+# import Any
+from typing import Any
 
-class MedicalResNetModel:
+
+class MedicalResNetModelBase(ABC):
     def __init__(self,
                  num_epochs,
                  data_loader: NiftiDataLoader,
@@ -14,16 +19,20 @@ class MedicalResNetModel:
                  weight_decay=None,
                  dropout_rate=None,
                  depth=18,
-                 spatial_dims=3,
                  pretrained=True,
-                 pretrained_weights_path=None
                  ):
 
-        self.spacial_dims = spatial_dims
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.data_loader: NiftiDataLoader = data_loader
+        self.model: Any = None
+        self.pretrained = pretrained
+
+        self.depth: int = depth
+        self.n_input_channels: int = 1
+        self.spacial_dims: int = 2
+        self.pretrained_weights_path = f"../src/models/weights/resnet_{self.depth}_23dataset.pth"
 
         # check what spatial dimensions the first training image is and set the model to that
         if self.data_loader.train_loader:
@@ -34,8 +43,10 @@ class MedicalResNetModel:
             self.spacial_dims = len(images.shape) - 2
 
         # set the n_input_channels based on the number of channels in the first image
-        n_input_channels = images.shape[1]
-        print("Number of input channels: ", n_input_channels)
+        self.n_input_channels = images.shape[1]
+        print("Number of input channels: ", self.n_input_channels)
+
+
 
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
@@ -44,30 +55,10 @@ class MedicalResNetModel:
         else:
             self.device = torch.device("cpu")
 
-                # Load custom pretrained weights if provided
-        if pretrained and pretrained_weights_path is not None:
-            state_dict = torch.load(pretrained_weights_path)
-            self.model.load_state_dict(state_dict)
+        self.set_model()
+        self.load_weights()
 
-        resnet: ResNet = None
-        if depth == 18:
-            resnet = resnet18
-        elif depth == 34:
-            resnet = resnet34
-        elif depth == 50:
-            resnet = resnet50
-        else:
-            raise ValueError(
-                "Unsupported depth for ResNet. Choose from 18, 34, 50.")
-
-        # Define the model
-        self.model: ResNet = resnet(
-            spatial_dims=self.spacial_dims,
-            n_input_channels=n_input_channels,
-            # dropout_rate=dropout_rate,
-        )
         num_features = self.model.fc.in_features
-
         if dropout_rate:
             self.model.fc = nn.Sequential(
                 nn.Dropout(dropout_rate),
@@ -82,6 +73,63 @@ class MedicalResNetModel:
         self.criterion = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
+    # def load_weights(self):
+    #     pretrained_weights_path=f"../src/models/weights/resnet_{self.depth}_23dataset.pth"
+    #     if self.pretrained and pretrained_weights_path is not None:
+    #         state = torch.load(pretrained_weights_path, map_location=self.device)
+
+    #         # print("Loading pretrained weights from: ", pretrained_weights_path)
+    #         # print shape of state_dict
+    #         # print(f"State dict shape: {state["state_dict"]}")
+    #         # Handle state dictionary key adjustment
+    #         if "state_dict" in state:
+    #             state = state["state_dict"]
+    #             # print("State dict key adjustment", state.keys())
+    #         self.model.load_state_dict(state)
+
+    def load_weights(self):
+        pretrained_weights_path = f"../src/models/weights/resnet_{self.depth}_23dataset.pth"
+        if self.pretrained and pretrained_weights_path is not None:
+            state = torch.load(pretrained_weights_path, map_location=self.device)
+
+            # Handle state dictionary key adjustment
+            if "state_dict" in state:
+                state = state["state_dict"]
+
+            # Strip the `module.` prefix
+            new_state_dict = {}
+            for k, v in state.items():
+                if k.startswith("module."):
+                    new_state_dict[k[len("module."):]] = v  # Remove the `module.` prefix
+                else:
+                    new_state_dict[k] = v
+
+            print("State dict key adjustment", new_state_dict.keys())
+            self.model.load_state_dict(new_state_dict)
+
+    # def load_weights(self):
+        
+    #     if self.pretrained and self.pretrained_weights_path is not None:
+    #         state = torch.load(self.pretrained_weights_path, map_location=self.device)
+
+    #         # Handle state dictionary key adjustment
+    #         if "state_dict" in state:
+    #             state = state["state_dict"]
+
+    #         # Strip the `module.` prefix
+    #         new_state_dict = {}
+    #         for k, v in state.items():
+    #             if k.startswith("module."):
+    #                 new_state_dict[k[7:]] = v  # Remove the `module.` prefix
+    #             else:
+    #                 new_state_dict[k] = v
+
+    #         print("State dict key adjustment", new_state_dict.keys())
+    #         self.model.load_state_dict(new_state_dict)
+
+    @abstractmethod
+    def set_model(self):
+        raise NotImplementedError
 
     def validation_loss(self):
         self.model.eval()
