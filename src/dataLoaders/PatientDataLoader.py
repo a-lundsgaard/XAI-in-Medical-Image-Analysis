@@ -150,7 +150,7 @@ class PatientDataProcessor:
         base_vars = ["BMI", "AGE"]
         common_vars = ["WOMTSL", "WOMTSR", "KQOL2", "PASE"]
         pain_vars = ["DILKN10", "DILKN11", "DILKN2",
-                     "DIRKN10", "DIRKN11", "DIRKN2"]
+                     "DIRKN10", "DIRKN11", "DIRKN2", "WOMKPL", "WOMKPR"]
         follow_up_vars = ["P01BMI"]
         all_vars_to_prefix = base_vars + common_vars + pain_vars
         all_vars_to_prefix = [visit + var for var in all_vars_to_prefix]

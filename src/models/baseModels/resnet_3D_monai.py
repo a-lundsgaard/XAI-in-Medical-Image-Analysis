@@ -48,7 +48,15 @@ class MedicalResNetModel:
             # dropout_rate=dropout_rate,
         )
         num_features = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
+
+
+        if dropout_rate:
+            self.model.fc = nn.Sequential(
+                nn.Dropout(dropout_rate),
+                nn.Linear(num_features, 1)
+            )
+        else:
+            self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
 
         self.model.to(self.device)
 
