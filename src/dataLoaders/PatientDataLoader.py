@@ -148,10 +148,10 @@ class PatientDataProcessor:
     def define_variables_of_interest(self, visit: str, available_columns: pd.Index) -> list:
         """Dynamically define variables of interest based on the visit code and check if they exist in the DataFrame."""
         base_vars = ["BMI", "AGE"]
-        common_vars = ["WOMTSL", "WOMTSR", "KQOL2", "PASE"]
+        common_vars = ["WOMTSL", "WOMTSR", "KQOL2", "PASE", "XRKL"]
         pain_vars = ["DILKN10", "DILKN11", "DILKN2",
-                     "DIRKN10", "DIRKN11", "DIRKN2"]
-        follow_up_vars = ["P01BMI"]
+                     "DIRKN10", "DIRKN11", "DIRKN2", "ALTMTH"]
+        follow_up_vars = ["P01BMI", "XRKL"]
         all_vars_to_prefix = base_vars + common_vars + pain_vars
         all_vars_to_prefix = [visit + var for var in all_vars_to_prefix]
         all_vars = follow_up_vars + all_vars_to_prefix

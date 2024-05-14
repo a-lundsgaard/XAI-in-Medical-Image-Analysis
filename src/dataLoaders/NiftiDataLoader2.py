@@ -8,6 +8,10 @@ import numpy as np
 from torch.utils.data import Subset
 from src.dataLoaders.PatientDataLoader import PatientDataProcessor
 import torch
+# import map_transforms
+from monai.transforms import MapTransform
+from typing import Optional, List, Any, Tuple
+
 
 
 class NiftiDataLoader:
@@ -17,21 +21,25 @@ class NiftiDataLoader:
             test_size=0.2,
             val_size=0.1,
             batch_size=2,
-            num_workers=4,
             cache_rate=0.5,
-            meta_data_loader = PatientDataProcessor
+            meta_data_loader = PatientDataProcessor,
+            # custom_transforms: list[MapTransform] = None  # Allow passing custom transforms
+            spatial_size: Tuple[int, int, int] | Tuple[int, int] = (128, 128, 128),
+            custom_transforms: Optional[List[MapTransform]] = None,  # Allow passing custom transforms,
         ):
             self.data_dir = data_dir
             self.test_size = test_size
             self.val_size = val_size
             self.batch_size = batch_size
-            self.num_workers = num_workers
             self.cache_rate = cache_rate
             self.meta_data_loader = meta_data_loader
+            self.custom_transforms = custom_transforms
+            self.spatial_size = spatial_size
 
             self.val_loader: DataLoader = None
             self.train_loader: DataLoader = None
             self.test_loader: DataLoader = None
+
 
             if torch.cuda.is_available():
                 self.device = torch.device("cuda")
@@ -60,6 +68,12 @@ class NiftiDataLoader:
         self.data_list = self.create_data_list(visit_no=visit_no)
         self.train_data, self.val_data, self.test_data = self.split_data()
         self.transforms = self.get_transforms()
+
+        # print shape of transformed data
+        print(f"Transformed data shape: {self.transforms(self.train_data[0])['image'].shape}")
+
+        # print length of transformed data
+        print(f"Transformed data length: {len(self.transforms(self.train_data[0])['image'])}")
 
         if subset_size is not None:
             train_indices = np.random.permutation(len(self.train_data))[:subset_size]
@@ -109,14 +123,13 @@ class NiftiDataLoader:
             image_path_right = self.get_image_path(row, right, visit)
             image_path_left = self.get_image_path(row, left, visit)
 
+            # Target label
             label = row[visit + self.meta_data_loader.metricDict["AGE"]]
 
             if os.path.exists(image_path_left):
-                data_list.append(
-                    {'image': image_path_left, 'label': label})
+                data_list.append({'image': image_path_left, 'label': label})
             if os.path.exists(image_path_right):
-                data_list.append({'image': image_path_right,
-                                 'label': label})
+                data_list.append({'image': image_path_right,'label': label})
         
         print(f"Total images detected: {len(data_list)}")
         print(f"Total images: {data_list[:5]}")
@@ -139,27 +152,30 @@ class NiftiDataLoader:
 
 
     def get_transforms(self):
-        return Compose([
+
+        # check that the custom transforms are of the correct type
+        if self.custom_transforms:
+            for transform in self.custom_transforms:
+                if not isinstance(transform, MapTransform):
+                    raise ValueError("All custom transforms must be of type MapTransform")
+
+        base_transforms = [
             LoadImaged(keys=["image"]),
             EnsureChannelFirstD(keys=["image"]),
-            ResizeD(keys=["image"], spatial_size=(128, 128, 128)),
-            ScaleIntensityd(keys=["image"]),
-            ToTensord(keys=["image"])
-        ])
+            ResizeD(keys=["image"], spatial_size=self.spatial_size),
+            ScaleIntensityd(keys=["image"])
+        ]
+
+        if self.custom_transforms:
+            base_transforms.extend(self.custom_transforms)
+
+        base_transforms.append(ToTensord(keys=["image"]))
+        
+        return Compose(base_transforms)
+    
+    
     
     def get_dataloaders(self):
         self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
         self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
         self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False)
-
-        """     def get_dataloaders(self, subset_size: int = None):
-        if subset_size is not None:
-            indices = np.random.permutation(len(self.train_ds))[:subset_size]
-            train_subset = Subset(self.train_ds, indices)
-            self.train_loader = DataLoader(
-                train_subset, batch_size=self.batch_size, shuffle=True)
-        else:
-            self.train_loader = DataLoader(
-                self.train_ds, batch_size=self.batch_size, shuffle=True)
-        self.val_loader = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
-        self.test_loader = DataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False) """

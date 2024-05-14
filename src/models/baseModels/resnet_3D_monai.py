@@ -9,12 +9,13 @@ from torch import Tensor
 class MedicalResNetModel:
     def __init__(self,
                  num_epochs,
+                 data_loader: NiftiDataLoader,
                  learning_rate=0.01,
-                 data_loader=NiftiDataLoader,
                  weight_decay=None,
                  dropout_rate=None,
                  depth=18,
-                 spatial_dims=3
+                 spatial_dims=3,
+                 pretrained=True
                  ):
 
         self.spacial_dims = spatial_dims
@@ -22,6 +23,18 @@ class MedicalResNetModel:
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.data_loader: NiftiDataLoader = data_loader
+
+        # check what spatial dimensions the first training image is and set the model to that
+        if self.data_loader.train_loader:
+            for batch_data in self.data_loader.train_loader:
+                images = batch_data["image"]
+                break
+            print("Image spatial dimensions: ", len(images.shape) - 2)
+            self.spacial_dims = len(images.shape) - 2
+
+        # set the n_input_channels based on the number of channels in the first image
+        n_input_channels = images.shape[1]
+        print("Number of input channels: ", n_input_channels)
 
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
@@ -44,15 +57,21 @@ class MedicalResNetModel:
         # Define the model
         self.model: ResNet = resnet(
             spatial_dims=self.spacial_dims,
-            n_input_channels=1,
+            n_input_channels=n_input_channels,
+            pretrained=pretrained,
             # dropout_rate=dropout_rate,
         )
         num_features = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
+
+        if dropout_rate:
+            self.model.fc = nn.Sequential(
+                nn.Dropout(dropout_rate),
+                nn.Linear(num_features, 1)
+            )
+        else:
+            self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
 
         self.model.to(self.device)
-
-
         # Loss and optimizer
         self.criterion = nn.MSELoss()
         self.optimizer = torch.optim.Adam(
