@@ -46,15 +46,6 @@ class MedicalResNetModelBase(ABC):
         self.n_input_channels = images.shape[1]
         print("Number of input channels: ", self.n_input_channels)
 
-
-
-        if torch.cuda.is_available():
-            self.device = torch.device("cuda")
-        # elif torch.backends.mps.is_available():
-        #     self.device = torch.device("mps")
-        else:
-            self.device = torch.device("cpu")
-
         self.set_model()
         self.load_weights()
 
@@ -66,8 +57,6 @@ class MedicalResNetModelBase(ABC):
             )
         else:
             self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
-
-        self.model.to(self.device)
         
         # Loss and optimizer
         self.criterion = nn.MSELoss()

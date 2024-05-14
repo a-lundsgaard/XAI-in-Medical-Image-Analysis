@@ -1,6 +1,7 @@
 from monai.networks.nets import ResNet, resnet18, resnet34, resnet50
 from src.dataLoaders.NiftiDataLoader2 import NiftiDataLoader
 from src.models.medical_models.base_medical import MedicalResNetModelBase
+import torch
 
 
 class MonaiMedicalResNet(MedicalResNetModelBase):
@@ -24,4 +25,14 @@ class MonaiMedicalResNet(MedicalResNetModelBase):
             spatial_dims=self.spacial_dims,
             n_input_channels=self.n_input_channels,
         )
+
+
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        # elif torch.backends.mps.is_available():
+        #     self.device = torch.device("mps")
+        else:
+            self.device = torch.device("cpu")
+
+        self.model.to(self.device)
         
