@@ -11,6 +11,7 @@ class MedicalResNetModel(MedicalResNetModelBase):
         super().__init__(num_epochs, data_loader, learning_rate, weight_decay, dropout_rate, depth, pretrained=False)
 
     def set_model(self):
+        self.model: ResNet = None
         if self.depth == 18:
             self.model = resnet18(num_classes=1)
         elif self.depth == 34:
@@ -31,5 +32,6 @@ class MedicalResNetModel(MedicalResNetModelBase):
         self.model.conv1 = nn.Conv2d(self.n_input_channels, out_channels, kernel_size=self.model.conv1.kernel_size, 
                                      stride=self.model.conv1.stride, padding=self.model.conv1.padding, 
                                      bias=False)
+        self.model.to(self.device)
         
 
