@@ -55,6 +55,8 @@ class MedicalResNetModelBase(ABC):
         else:
             self.device = torch.device("cpu")
 
+        # self.device = torch.device("cpu")
+
         self.set_model()
         self.load_weights()
 
@@ -66,31 +68,14 @@ class MedicalResNetModelBase(ABC):
             )
         else:
             self.model.fc = nn.Linear(num_features, 1)  # Output layer for regression.
-
-        
-
         self.model.to(self.device)
 
         print("gpu: ", next(self.model.parameters()).device)
-
         
         # Loss and optimizer
         self.criterion = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    # def load_weights(self):
-    #     pretrained_weights_path=f"../src/models/weights/resnet_{self.depth}_23dataset.pth"
-    #     if self.pretrained and pretrained_weights_path is not None:
-    #         state = torch.load(pretrained_weights_path, map_location=self.device)
-
-    #         # print("Loading pretrained weights from: ", pretrained_weights_path)
-    #         # print shape of state_dict
-    #         # print(f"State dict shape: {state["state_dict"]}")
-    #         # Handle state dictionary key adjustment
-    #         if "state_dict" in state:
-    #             state = state["state_dict"]
-    #             # print("State dict key adjustment", state.keys())
-    #         self.model.load_state_dict(state)
 
     def load_weights(self):
         pretrained_weights_path = f"../src/models/weights/resnet_{self.depth}_23dataset.pth"
@@ -112,25 +97,6 @@ class MedicalResNetModelBase(ABC):
             print("State dict key adjustment", new_state_dict.keys())
             self.model.load_state_dict(new_state_dict)
 
-    # def load_weights(self):
-        
-    #     if self.pretrained and self.pretrained_weights_path is not None:
-    #         state = torch.load(self.pretrained_weights_path, map_location=self.device)
-
-    #         # Handle state dictionary key adjustment
-    #         if "state_dict" in state:
-    #             state = state["state_dict"]
-
-    #         # Strip the `module.` prefix
-    #         new_state_dict = {}
-    #         for k, v in state.items():
-    #             if k.startswith("module."):
-    #                 new_state_dict[k[7:]] = v  # Remove the `module.` prefix
-    #             else:
-    #                 new_state_dict[k] = v
-
-    #         print("State dict key adjustment", new_state_dict.keys())
-    #         self.model.load_state_dict(new_state_dict)
 
     @abstractmethod
     def set_model(self):
@@ -157,7 +123,7 @@ class MedicalResNetModelBase(ABC):
         print("Is cuda available: ", torch.cuda.is_available(), self.device)
 
         for epoch in range(self.num_epochs):
-            # print("Setting model to train mode")
+            # print("Starting new epoch...")
             self.model.train()
             running_loss = 0.0
             running_val_loss = 0.0
@@ -186,9 +152,11 @@ class MedicalResNetModelBase(ABC):
                 running_val_loss += self.validation_loss()
                 # print("Finishing batch")
 
+            print(f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_loss/len(self.data_loader.train_loader)}, Val Loss: {running_val_loss/len(self.data_loader.val_loader)}")
+
+            # print("Updating cache...")
             self.data_loader.update_cache()
             # print( f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_loss/len(self.data_loader.train_loader)}")
-            print(f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_loss/len(self.data_loader.train_loader)}, Val Loss: {running_val_loss/len(self.data_loader.val_loader)}")
 
         self.data_loader.shutdown_cache()
 

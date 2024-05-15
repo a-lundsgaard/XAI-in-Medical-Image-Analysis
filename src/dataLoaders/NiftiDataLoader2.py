@@ -95,6 +95,11 @@ class NiftiDataLoader:
                 self.train_ds = self.create_persistent_cache_dataset(self.train_data, train_indices, "train")
                 self.val_ds = self.create_persistent_cache_dataset(self.val_data, val_indices, "val")
                 self.test_ds = self.create_persistent_cache_dataset(self.test_data, test_indices, "test")
+            elif cache == "standard":
+                # using cache dataset with subset
+                self.train_ds = self.create_cache_dataset(self.train_data, train_indices)
+                self.val_ds = self.create_cache_dataset(self.val_data, val_indices)
+                self.test_ds = self.create_cache_dataset(self.test_data, test_indices)
             else:
                 self.train_ds = Dataset(data=[self.train_data[i] for i in train_indices], transform=self.transforms)
                 self.val_ds = Dataset(data=[self.val_data[i] for i in val_indices], transform=self.transforms)

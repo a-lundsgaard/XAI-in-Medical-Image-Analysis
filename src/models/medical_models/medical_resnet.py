@@ -16,9 +16,9 @@ class MedicalResNetModel(MedicalResNetModelBase):
         if self.depth == 18:
             model = resnet18(weights=models.ResNet18_Weights.DEFAULT)
         elif self.depth == 34:
-            model = resnet34(weights=models.ResNet18_Weights.DEFAULT)
+            model = resnet34(weights=models.ResNet34_Weights.DEFAULT)
         elif self.depth == 50:
-            model = resnet50(weights=models.ResNet18_Weights.DEFAULT)
+            model = resnet50(weights=models.ResNet50_Weights.DEFAULT)
         else:
             raise ValueError("Unsupported depth for ResNet. Choose from 18, 34, 50.")
         
