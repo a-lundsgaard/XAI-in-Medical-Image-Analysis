@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from typing import Dict
 
 """ 
 
@@ -60,8 +61,7 @@ class PatientDataProcessor:
         self.subjects = np.loadtxt(base_path + "SubjectChar00.txt",
                                    delimiter='|', skiprows=1, usecols=(0,), dtype=int)
         self.visit: str = None
-
-        self.visits: dict[int, str] = {}
+        self.visits: Dict[int, str] = {}
 
         self.metricDict = {
             "BMI": "BMI",
@@ -91,7 +91,7 @@ class PatientDataProcessor:
         return combined_data
 
 
-    def get_visit(self, visit_no: int):
+    def get_visit(self, visit_no: int = None):
         if visit_no in self.visits:
             return self.visits[visit_no]
         else : 
@@ -106,6 +106,9 @@ class PatientDataProcessor:
             {'1: Male': 0, '2: Female': 1})
         self.enroll_df.rename(columns={'P02SEX': 'Sex'}, inplace=True)
 
+    # def get_kellberg_lawrence_grade(self, visit_no: int):
+    #     file_path = self.base_path + "KL" + str(visit_no) + ".txt"
+
     def load_data(self, file_name: str, index_col: str = "ID") -> pd.DataFrame:
         """Load data from a given file within the base path, handling pipe-delimited format."""
         path = f"{self.base_path}/{file_name}"
@@ -114,6 +117,10 @@ class PatientDataProcessor:
         except Exception as e:
             print(f"Error loading data from {path}: {e}")
             return pd.DataFrame()
+        
+    def load_all_visits(self):
+        for visit_no in range(0, 12):  # Assuming there are 10 visits
+            self.create_meta_data_for_visit(visit_no)
 
     def create_meta_data_for_visit(self, visit_no: int):
         visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
@@ -148,7 +155,7 @@ class PatientDataProcessor:
     def define_variables_of_interest(self, visit: str, available_columns: pd.Index) -> list:
         """Dynamically define variables of interest based on the visit code and check if they exist in the DataFrame."""
         base_vars = ["BMI", "AGE"]
-        common_vars = ["WOMTSL", "WOMTSR", "KQOL2", "PASE", "XRKL"]
+        common_vars = ["WOMTSL", "WOMTSR", "KQOL2", "PASE"]
         pain_vars = ["DILKN10", "DILKN11", "DILKN2",
                      "DIRKN10", "DIRKN11", "DIRKN2", "WOMKPL", "WOMKPR"]
         follow_up_vars = ["P01BMI"]

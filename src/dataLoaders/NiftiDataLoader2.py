@@ -56,28 +56,21 @@ class NiftiDataLoader:
     def shutdown_cache(self):
         if (isinstance(self.train_ds, SmartCacheDataset)):
             self.train_ds.shutdown()
+    
+    def load_data(self, visit_no: int = None, subset_size: int = None, cache: str = "persistent"):
+        if visit_no is None:
+            self.meta_data_loader.load_all_visits()
+        else:
+            self.meta_data_loader.create_meta_data_for_visit(visit_no)
 
-
-    def load_data(self, visit_no: int, subset_size: int = None, cache: str = "persistent" ):
-        self.data_list = self.create_data_list(visit_no=visit_no)
+        self.data_list = self.create_data_list(visit_no)
         self.train_data, self.val_data, self.test_data = self.split_data()
         self.transforms = self.get_transforms()
-
-        # print shape of transformed data
-        print(f"Transformed data shape: {self.transforms(self.train_data[0])['image'].shape}")
-
-        # print length of transformed data
-        print(f"Transformed data length: {len(self.transforms(self.train_data[0])['image'])}")
 
         if subset_size is not None:
             train_indices = np.random.permutation(len(self.train_data))[:subset_size]
             val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size*self.cache_rate)]
             test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size*self.cache_rate)]
-
-            # print length of train, val, and test indices
-            print(f"Train indices length: {len(self.train_data)}, cache length {subset_size*self.cache_rate}")
-            print(f"Val indices length: {len(val_indices)}")
-            print(f"Test indices length: {len(test_indices)}")
 
             if cache == "smart":
                 self.train_ds = self.create_smart_cache_dataset(self.train_data, train_indices, cache_rate=self.cache_rate, replace_rate=self.replace_rate)
@@ -88,7 +81,6 @@ class NiftiDataLoader:
                 self.val_ds = self.create_persistent_cache_dataset(self.val_data, val_indices, "val")
                 self.test_ds = self.create_persistent_cache_dataset(self.test_data, test_indices, "test")
             elif cache == "standard":
-                # using cache dataset with subset
                 self.train_ds = self.create_cache_dataset(self.train_data, train_indices)
                 self.val_ds = self.create_cache_dataset(self.val_data, val_indices)
                 self.test_ds = self.create_cache_dataset(self.test_data, test_indices)
@@ -99,6 +91,49 @@ class NiftiDataLoader:
         else:
             raise ValueError("Subset size must be provided")
         self.get_dataloaders()
+
+
+    # def load_data(self, visit_no: int, subset_size: int = None, cache: str = "persistent" ):
+    #     self.data_list = self.create_data_list(visit_no=visit_no)
+    #     self.train_data, self.val_data, self.test_data = self.split_data()
+    #     self.transforms = self.get_transforms()
+
+    #     # print shape of transformed data
+    #     print(f"Transformed data shape: {self.transforms(self.train_data[0])['image'].shape}")
+
+    #     # print length of transformed data
+    #     print(f"Transformed data length: {len(self.transforms(self.train_data[0])['image'])}")
+
+    #     if subset_size is not None:
+    #         train_indices = np.random.permutation(len(self.train_data))[:subset_size]
+    #         val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size*self.cache_rate)]
+    #         test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size*self.cache_rate)]
+
+    #         # print length of train, val, and test indices
+    #         print(f"Train indices length: {len(self.train_data)}, cache length {subset_size*self.cache_rate}")
+    #         print(f"Val indices length: {len(val_indices)}")
+    #         print(f"Test indices length: {len(test_indices)}")
+
+    #         if cache == "smart":
+    #             self.train_ds = self.create_smart_cache_dataset(self.train_data, train_indices, cache_rate=self.cache_rate, replace_rate=self.replace_rate)
+    #             self.val_ds = self.create_cache_dataset(self.val_data, val_indices)
+    #             self.test_ds = self.create_cache_dataset(self.test_data, test_indices)
+    #         elif cache == "persistent":
+    #             self.train_ds = self.create_persistent_cache_dataset(self.train_data, train_indices, "train")
+    #             self.val_ds = self.create_persistent_cache_dataset(self.val_data, val_indices, "val")
+    #             self.test_ds = self.create_persistent_cache_dataset(self.test_data, test_indices, "test")
+    #         elif cache == "standard":
+    #             # using cache dataset with subset
+    #             self.train_ds = self.create_cache_dataset(self.train_data, train_indices)
+    #             self.val_ds = self.create_cache_dataset(self.val_data, val_indices)
+    #             self.test_ds = self.create_cache_dataset(self.test_data, test_indices)
+    #         else:
+    #             self.train_ds = Dataset(data=[self.train_data[i] for i in train_indices], transform=self.transforms)
+    #             self.val_ds = Dataset(data=[self.val_data[i] for i in val_indices], transform=self.transforms)
+    #             self.test_ds = Dataset(data=[self.test_data[i] for i in test_indices], transform=self.transforms)
+    #     else:
+    #         raise ValueError("Subset size must be provided")
+    #     self.get_dataloaders()
 
             # Using SmartCacheDataset with subset
     def create_smart_cache_dataset(self, data, indices, cache_rate= 0.5, replace_rate=0.2):
@@ -122,25 +157,33 @@ class NiftiDataLoader:
     def get_image_path(self, row: pd.Series, side: str, visit: str):
         return os.path.join(self.data_dir, f"{row.name}-{side}-{visit}.nii.gz")
 
-    def create_data_list(self, visit_no: int):
+    def create_data_list(self, visit_no: int = None):
         left = "Left"
         right = "Right"
         # visit = "V00"
-        visit: str = self.meta_data_loader.get_visit(visit_no)
+        # visit: str = self.meta_data_loader.get_visit(visit_no)
         data_list: List[Dict[str, any]] = []
 
-        for _, row in self.meta_data_loader.get_data().iterrows():
-            image_path_right = self.get_image_path(row, right, visit)
-            image_path_left = self.get_image_path(row, left, visit)
+        if visit_no is None:
+            visits = self.meta_data_loader.visits.keys()
+            print(f"Visits: {visits}")
+        else:
+            visits = [visit_no]
 
-            # label = row[visit + self.meta_data_loader.metricDict["AGE"]]
-            label_right_knee = row[visit + "WOMKPR"]
-            label_left_knee = row[visit + "WOMKPL"]
+        for v_no in visits:
+            visit: str = self.meta_data_loader.get_visit(v_no)
+            for _, row in self.meta_data_loader.get_data().iterrows():
+                image_path_right = self.get_image_path(row, right, visit)
+                image_path_left = self.get_image_path(row, left, visit)
 
-            if os.path.exists(image_path_left):
-                data_list.append( {'image': image_path_left, 'label': label_left_knee})
-            if os.path.exists(image_path_right):
-                data_list.append({'image': image_path_right,'label': label_right_knee})
+                # label = row[visit + self.meta_data_loader.metricDict["AGE"]]
+                label_right_knee = row[visit + "WOMKPR"]
+                label_left_knee = row[visit + "WOMKPL"]
+
+                if os.path.exists(image_path_left):
+                    data_list.append( {'image': image_path_left, 'label': label_left_knee})
+                if os.path.exists(image_path_right):
+                    data_list.append({'image': image_path_right,'label': label_right_knee})
         
         print(f"Total images detected: {len(data_list)}")
         print(f"Total images: {data_list[:5]}")
@@ -163,8 +206,6 @@ class NiftiDataLoader:
 
 
     def get_transforms(self):
-
-        # check that the custom transforms are of the correct type
         if self.custom_transforms:
             for transform in self.custom_transforms:
                 if not isinstance(transform, MapTransform):
@@ -183,7 +224,6 @@ class NiftiDataLoader:
         base_transforms.append(ToTensord(keys=["image"]))
         
         return Compose(base_transforms)
-    
     
     
     def get_dataloaders(self):
