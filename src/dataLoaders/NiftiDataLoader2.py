@@ -227,6 +227,6 @@ class NiftiDataLoader:
     
     
     def get_dataloaders(self):
-        self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
+        self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, use_thread_workers=True)
         self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
         self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False)
