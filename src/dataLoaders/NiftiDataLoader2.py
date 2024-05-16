@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from monai.data import CacheDataset, DataLoader, SmartCacheDataset, PersistentDataset, Dataset, GDSDataset, ThreadDataLoader
-from monai.transforms import Compose, LoadImaged, EnsureChannelFirstD, ScaleIntensityd, ToTensord, ResizeD
+from monai.transforms import Compose, LoadImaged, EnsureChannelFirstD, ScaleIntensityd, ToTensord, ResizeD, Lambdad
 from sklearn.model_selection import train_test_split
 from typing import List, Dict
 import numpy as np
@@ -24,7 +24,6 @@ class NiftiDataLoader:
             cache_rate=0.5,
             replace_rate=0.2,
             meta_data_loader = PatientDataProcessor,
-            # custom_transforms: list[MapTransform] = None  # Allow passing custom transforms
             spatial_size: Tuple[int, int, int] | Tuple[int, int] = (128, 128, 128),
             custom_transforms: Optional[List[MapTransform]] = None,  # Allow passing custom transforms,
         ):
@@ -41,6 +40,7 @@ class NiftiDataLoader:
             self.val_loader: DataLoader = None
             self.train_loader: DataLoader = None
             self.test_loader: DataLoader = None
+            self.available_workers = os.cpu_count()
 
     def make_smart_cache(self, data: Compose, cache_num: int, replace_rate: float = 0.2):
         return SmartCacheDataset(data=data, cache_num=cache_num, replace_rate=replace_rate)
@@ -92,61 +92,17 @@ class NiftiDataLoader:
             raise ValueError("Subset size must be provided")
         self.get_dataloaders()
 
-
-    # def load_data(self, visit_no: int, subset_size: int = None, cache: str = "persistent" ):
-    #     self.data_list = self.create_data_list(visit_no=visit_no)
-    #     self.train_data, self.val_data, self.test_data = self.split_data()
-    #     self.transforms = self.get_transforms()
-
-    #     # print shape of transformed data
-    #     print(f"Transformed data shape: {self.transforms(self.train_data[0])['image'].shape}")
-
-    #     # print length of transformed data
-    #     print(f"Transformed data length: {len(self.transforms(self.train_data[0])['image'])}")
-
-    #     if subset_size is not None:
-    #         train_indices = np.random.permutation(len(self.train_data))[:subset_size]
-    #         val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size*self.cache_rate)]
-    #         test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size*self.cache_rate)]
-
-    #         # print length of train, val, and test indices
-    #         print(f"Train indices length: {len(self.train_data)}, cache length {subset_size*self.cache_rate}")
-    #         print(f"Val indices length: {len(val_indices)}")
-    #         print(f"Test indices length: {len(test_indices)}")
-
-    #         if cache == "smart":
-    #             self.train_ds = self.create_smart_cache_dataset(self.train_data, train_indices, cache_rate=self.cache_rate, replace_rate=self.replace_rate)
-    #             self.val_ds = self.create_cache_dataset(self.val_data, val_indices)
-    #             self.test_ds = self.create_cache_dataset(self.test_data, test_indices)
-    #         elif cache == "persistent":
-    #             self.train_ds = self.create_persistent_cache_dataset(self.train_data, train_indices, "train")
-    #             self.val_ds = self.create_persistent_cache_dataset(self.val_data, val_indices, "val")
-    #             self.test_ds = self.create_persistent_cache_dataset(self.test_data, test_indices, "test")
-    #         elif cache == "standard":
-    #             # using cache dataset with subset
-    #             self.train_ds = self.create_cache_dataset(self.train_data, train_indices)
-    #             self.val_ds = self.create_cache_dataset(self.val_data, val_indices)
-    #             self.test_ds = self.create_cache_dataset(self.test_data, test_indices)
-    #         else:
-    #             self.train_ds = Dataset(data=[self.train_data[i] for i in train_indices], transform=self.transforms)
-    #             self.val_ds = Dataset(data=[self.val_data[i] for i in val_indices], transform=self.transforms)
-    #             self.test_ds = Dataset(data=[self.test_data[i] for i in test_indices], transform=self.transforms)
-    #     else:
-    #         raise ValueError("Subset size must be provided")
-    #     self.get_dataloaders()
-
-            # Using SmartCacheDataset with subset
     def create_smart_cache_dataset(self, data, indices, cache_rate= 0.5, replace_rate=0.2):
         subset_data = [data[i] for i in indices]
         # print length of subset data
         print(f"Subset data length: {len(subset_data)}")
         cache_num = int(len(subset_data) * cache_rate)
         print(f"Cache num: {cache_num}")
-        return SmartCacheDataset(data=subset_data, transform=self.transforms, cache_num=cache_num, replace_rate=replace_rate, num_replace_workers=os.cpu_count())
+        return SmartCacheDataset(data=subset_data, transform=self.transforms, cache_num=cache_num, replace_rate=replace_rate, num_replace_workers=self.available_workers)
     
     def create_cache_dataset(self, data, indices):
         subset_data = [data[i] for i in indices]
-        return CacheDataset(data=subset_data, transform=self.transforms, num_workers=os.cpu_count())
+        return CacheDataset(data=subset_data, transform=self.transforms, num_workers=self.available_workers)
     
     def create_persistent_cache_dataset(self, data, indices, data_prefix: str):
         subset_data = [data[i] for i in indices]
@@ -160,8 +116,6 @@ class NiftiDataLoader:
     def create_data_list(self, visit_no: int = None):
         left = "Left"
         right = "Right"
-        # visit = "V00"
-        # visit: str = self.meta_data_loader.get_visit(visit_no)
         data_list: List[Dict[str, any]] = []
 
         if visit_no is None:
@@ -196,8 +150,6 @@ class NiftiDataLoader:
         train_data, val_data = train_test_split(
             train_val_data, test_size=self.val_size / (1 - self.test_size), random_state=42)
         
-
-            # Print example data to confirm integrity
         print(f"Example train data: {train_data[0]}")
         print(f"Example validation data: {val_data[0]}")
         print(f"Example test data: {test_data[0]}")
@@ -213,9 +165,10 @@ class NiftiDataLoader:
 
         base_transforms = [
             LoadImaged(keys=["image"]),
+            Lambdad(keys=["image"], func=lambda x: x.half()),  # Convert to float16
             EnsureChannelFirstD(keys=["image"]),
             ResizeD(keys=["image"], spatial_size=self.spatial_size),
-            ScaleIntensityd(keys=["image"])
+            ScaleIntensityd(keys=["image"]),
         ]
 
         if self.custom_transforms:
@@ -227,6 +180,6 @@ class NiftiDataLoader:
     
     
     def get_dataloaders(self):
-        self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, use_thread_workers=True, num_workers=os.cpu_count())
-        self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=os.cpu_count())
-        self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=os.cpu_count())
+        self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, use_thread_workers=True, num_workers=self.available_workers)
+        self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
+        self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
