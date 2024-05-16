@@ -146,7 +146,7 @@ class NiftiDataLoader:
     
     def create_cache_dataset(self, data, indices):
         subset_data = [data[i] for i in indices]
-        return CacheDataset(data=subset_data, transform=self.transforms)
+        return CacheDataset(data=subset_data, transform=self.transforms, num_workers=os.cpu_count())
     
     def create_persistent_cache_dataset(self, data, indices, data_prefix: str):
         subset_data = [data[i] for i in indices]
@@ -227,6 +227,6 @@ class NiftiDataLoader:
     
     
     def get_dataloaders(self):
-        self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
-        self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
-        self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False)
+        self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, use_thread_workers=True, num_workers=os.cpu_count())
+        self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=os.cpu_count())
+        self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=os.cpu_count())
