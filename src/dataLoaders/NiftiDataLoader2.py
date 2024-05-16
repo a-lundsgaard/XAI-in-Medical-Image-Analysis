@@ -42,14 +42,6 @@ class NiftiDataLoader:
             self.train_loader: DataLoader = None
             self.test_loader: DataLoader = None
 
-
-            if torch.cuda.is_available():
-                self.device = torch.device("cuda")
-            # elif torch.backends.mps.is_available():
-            #     self.device = torch.device("mps")
-            else:
-                self.device = torch.device("cpu")
-
     def make_smart_cache(self, data: Compose, cache_num: int, replace_rate: float = 0.2):
         return SmartCacheDataset(data=data, cache_num=cache_num, replace_rate=replace_rate)
     
