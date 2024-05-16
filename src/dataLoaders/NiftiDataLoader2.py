@@ -51,6 +51,7 @@ class NiftiDataLoader:
     
     def update_cache(self):
         if (isinstance(self.train_ds, SmartCacheDataset)):
+            print("Updating cache...")
             self.train_ds.update_cache()
 
     def shutdown_cache(self):
@@ -98,7 +99,7 @@ class NiftiDataLoader:
         print(f"Subset data length: {len(subset_data)}")
         cache_num = int(len(subset_data) * cache_rate)
         print(f"Cache num: {cache_num}")
-        return SmartCacheDataset(data=subset_data, transform=self.transforms, cache_num=cache_num, replace_rate=replace_rate, num_replace_workers=self.available_workers)
+        return SmartCacheDataset(data=subset_data, num_init_workers=self.available_workers, transform=self.transforms, cache_num=cache_num, replace_rate=replace_rate, num_replace_workers=self.available_workers)
     
     def create_cache_dataset(self, data, indices):
         subset_data = [data[i] for i in indices]
@@ -165,7 +166,6 @@ class NiftiDataLoader:
 
         base_transforms = [
             LoadImaged(keys=["image"]),
-            Lambdad(keys=["image"], func=lambda x: x.half()),  # Convert to float16
             EnsureChannelFirstD(keys=["image"]),
             ResizeD(keys=["image"], spatial_size=self.spatial_size),
             ScaleIntensityd(keys=["image"]),
