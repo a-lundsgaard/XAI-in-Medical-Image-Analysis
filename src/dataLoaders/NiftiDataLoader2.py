@@ -11,6 +11,7 @@ import torch
 # import map_transforms
 from monai.transforms import MapTransform
 from typing import Optional, List, Any, Tuple
+import pickle
 
 
 
@@ -41,6 +42,10 @@ class NiftiDataLoader:
             self.train_loader: DataLoader = None
             self.test_loader: DataLoader = None
             self.available_workers = 4
+            self.file_path = os.path.dirname(os.path.abspath(__file__))
+            # Save file path for data_list.pkl
+            self.data_list_dir = os.path.join(self.file_path, "saved_data_lists")
+            self.data_list_file = os.path.join(self.data_list_dir, "data_list.pkl")
 
     def make_smart_cache(self, data: Compose, cache_num: int, replace_rate: float = 0.2):
         return SmartCacheDataset(data=data, cache_num=cache_num, replace_rate=replace_rate)
@@ -64,7 +69,7 @@ class NiftiDataLoader:
         else:
             self.meta_data_loader.create_meta_data_for_visit(visit_no)
 
-        self.data_list = self.create_data_list(visit_no)
+        self.create_data_list(visit_no)
         self.train_data, self.val_data, self.test_data = self.split_data()
         self.transforms = self.get_transforms()
 
@@ -109,7 +114,8 @@ class NiftiDataLoader:
         subset_data = [data[i] for i in indices]
         cache_num = int(len(subset_data))
         print(f"Cache num: {cache_num}")
-        return PersistentDataset(data=subset_data, transform=self.transforms, cache_dir="./cache/" + data_prefix) 
+        path = os.path.join(self.file_path, "cache", data_prefix)
+        return PersistentDataset(data=subset_data, transform=self.transforms, cache_dir=path) 
 
     def get_image_path(self, row: pd.Series, side: str, visit: str):
         return os.path.join(self.data_dir, f"{row.name}-{side}-{visit}.nii.gz")
@@ -118,6 +124,10 @@ class NiftiDataLoader:
         left = "Left"
         right = "Right"
         data_list: List[Dict[str, any]] = []
+
+        # check if the list has been saved before and use that
+        if self.load_data_list():
+            return self.data_list
 
         if visit_no is None:
             visits = self.meta_data_loader.visits.keys()
@@ -139,7 +149,9 @@ class NiftiDataLoader:
                     data_list.append( {'image': image_path_left, 'label': label_left_knee})
                 if os.path.exists(image_path_right):
                     data_list.append({'image': image_path_right,'label': label_right_knee})
-        
+
+        self.data_list = data_list
+        self.save_data_list()
         print(f"Total images detected: {len(data_list)}")
         print(f"Total images: {data_list[:5]}")
 
@@ -178,6 +190,25 @@ class NiftiDataLoader:
         base_transforms.append(ToTensord(keys=["image"]))
         
         return Compose(base_transforms)
+    
+    def save_data_list(self):
+        """Save the data list to a file using pickle."""
+        os.makedirs(self.data_list_dir, exist_ok=True)
+
+        with open(self.data_list_file, 'wb') as file:
+            pickle.dump(self.data_list, file)
+        print(f"Data list saved to {self.file_path}")
+
+    def load_data_list(self):
+        """Load the data list from a file using pickle."""
+
+        if(not os.path.exists(self.data_list_file)):
+            print(f"File {self.data_list_file} does not exist.")
+            return False
+        with open(self.data_list_file, 'rb') as file:
+            self.data_list = pickle.load(file)
+        print(f"Data list loaded from {self.data_list_file}")
+        return True
     
     
     def get_dataloaders(self):
