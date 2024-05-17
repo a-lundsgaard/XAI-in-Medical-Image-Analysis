@@ -18,7 +18,9 @@ class MedicalResNetModelBase(ABC):
                  dropout_rate=None,
                  depth=18,
                  pretrained=True,
-                 model=None):
+                 model=None,
+                 n_input_channels=1,
+                 ):
 
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
@@ -28,13 +30,12 @@ class MedicalResNetModelBase(ABC):
         self.pretrained = pretrained
 
         self.depth: int = depth
-        self.n_input_channels: int = 1
+        self.n_input_channels: int = n_input_channels
         self.spacial_dims: int = 2
         self.pretrained_weights_path = f"../src/models/weights/resnet_{self.depth}_23dataset.pth"
         self.save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_models")
 
         # check what spatial dimensions the first training image is and set the model to that
-        images = None
         if self.data_loader.train_loader:
             for batch_data in self.data_loader.train_loader:
                 images = batch_data["image"]
@@ -43,7 +44,10 @@ class MedicalResNetModelBase(ABC):
             self.spacial_dims = len(images.shape) - 2
 
         # set the n_input_channels based on the number of channels in the first image
-        self.n_input_channels = images.shape[1] if images else 3
+        if images is not None:
+            self.n_input_channels = images.shape[1]
+        else:
+            print("No training data found. Defaulting to channel.")
         print("Number of input channels: ", self.n_input_channels)
 
         # Device setup
@@ -161,12 +165,12 @@ class MedicalResNetModelBase(ABC):
         self.data_loader.shutdown_cache()
         self.writer.close()
 
-    def evaluate(self):
+    def evaluate(self, loader = None):
         self.model.eval()
         total_loss = 0.0
         r2_metric = R2Score().to(self.device)
         with torch.no_grad():
-            for batch_data in self.data_loader.test_loader:
+            for batch_data in loader if loader else self.data_loader.test_loader:
                 images = batch_data["image"].to(self.device)
                 labels = batch_data["label"].float().to(self.device)
                 predicted = self.model(images).flatten()
@@ -174,6 +178,7 @@ class MedicalResNetModelBase(ABC):
                 loss = self.criterion(predicted, labels)
                 total_loss += loss.item()
                 r2_metric.update(predicted, labels)
+                print(f"Predicted: {predicted}, Actual: {labels}")
 
         r2_score = r2_metric.compute()
         print(f'R^2 score of the network on the test images: {r2_score}')

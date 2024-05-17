@@ -40,7 +40,7 @@ class NiftiDataLoader:
             self.val_loader: DataLoader = None
             self.train_loader: DataLoader = None
             self.test_loader: DataLoader = None
-            self.available_workers = os.cpu_count()
+            self.available_workers = 4
 
     def make_smart_cache(self, data: Compose, cache_num: int, replace_rate: float = 0.2):
         return SmartCacheDataset(data=data, cache_num=cache_num, replace_rate=replace_rate)
