@@ -123,6 +123,8 @@ class MedicalResNetModelBase(ABC):
 
         self.data_loader.run_replacement_thread()
         print("Is cuda available: ", torch.cuda.is_available(), self.device)
+        # print no of training images
+        print(f"Number of training images: {len(self.data_loader.train_ds)}")
         data_refresh_count = 1
 
         best_val_loss = float('inf')        
@@ -198,7 +200,7 @@ class MedicalResNetModelBase(ABC):
             'optimizer_state_dict': self.optimizer.state_dict(),
             'val_loss': val_loss,
         }
-        save_path = os.path.join(self.save_dir, f"{self.__class__.__name__}_{self.depth}_{len(self.data_loader.train_ds)}_epoch_{epoch}.pth")
+        save_path = os.path.join(self.save_dir, f"{self.__class__.__name__}_{self.depth}_{len(self.data_loader.train_ds)}_epoch_{epoch}_val_{round(val_loss, 2)}.pth")
         torch.save(model_state, save_path)
         print(f"Model saved at {save_path}")
 
