@@ -18,7 +18,9 @@ class MedicalResNetModelBase(ABC):
                  dropout_rate=None,
                  depth=18,
                  pretrained=True,
-                 model=None):
+                 model=None,
+                 n_input_channels=1,
+                 ):
 
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
@@ -28,7 +30,7 @@ class MedicalResNetModelBase(ABC):
         self.pretrained = pretrained
 
         self.depth: int = depth
-        self.n_input_channels: int = 1
+        self.n_input_channels: int = n_input_channels
         self.spacial_dims: int = 2
         self.pretrained_weights_path = f"../src/models/weights/resnet_{self.depth}_23dataset.pth"
         self.save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_models")
@@ -42,7 +44,10 @@ class MedicalResNetModelBase(ABC):
             self.spacial_dims = len(images.shape) - 2
 
         # set the n_input_channels based on the number of channels in the first image
-        self.n_input_channels = images.shape[1]
+        if images is not None:
+            self.n_input_channels = images.shape[1]
+        else:
+            print("No training data found. Defaulting to channel.")
         print("Number of input channels: ", self.n_input_channels)
 
         # Device setup
@@ -118,8 +123,9 @@ class MedicalResNetModelBase(ABC):
 
         self.data_loader.run_replacement_thread()
         print("Is cuda available: ", torch.cuda.is_available(), self.device)
+        data_refresh_count = 1
 
-        best_val_loss = float('inf')
+        best_val_loss = float('inf')        
 
         for epoch in range(self.num_epochs):
             self.model.train()
@@ -139,27 +145,32 @@ class MedicalResNetModelBase(ABC):
             # Compute validation loss once per epoch
             current_val_loss = self.validation_loss()
 
-            print(f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_loss/len(self.data_loader.train_loader)}, Val Loss: {current_val_loss/len(self.data_loader.val_loader)}")
+            # Print epoch statistics
+            print(f"Epoch {epoch + 1}/{self.num_epochs}, Train Loss: {running_loss / len(self.data_loader.train_loader)}, Val Loss: {current_val_loss}")
 
             # Log losses to TensorBoard
             self.writer.add_scalar('Loss/train', running_loss / len(self.data_loader.train_loader), epoch)
-            self.writer.add_scalar('Loss/val', current_val_loss / len(self.data_loader.val_loader), epoch)
+            self.writer.add_scalar('Loss/val', current_val_loss, epoch)
 
+            # Save the best model
             if current_val_loss < best_val_loss:
                 best_val_loss = current_val_loss
                 self.save_model(epoch + 1, current_val_loss, is_best=True)
 
-            self.data_loader.update_cache()
+            # Update cache if needed
+            if self.data_loader.replace_rate == 1 and epoch == int(self.num_epochs * self.data_loader.cache_rate * data_refresh_count):
+                data_refresh_count += 1
+                self.data_loader.update_cache()
 
         self.data_loader.shutdown_cache()
         self.writer.close()
 
-    def evaluate(self):
+    def evaluate(self, loader = None):
         self.model.eval()
         total_loss = 0.0
         r2_metric = R2Score().to(self.device)
         with torch.no_grad():
-            for batch_data in self.data_loader.test_loader:
+            for batch_data in loader if loader else self.data_loader.test_loader:
                 images = batch_data["image"].to(self.device)
                 labels = batch_data["label"].float().to(self.device)
                 predicted = self.model(images).flatten()
@@ -167,6 +178,7 @@ class MedicalResNetModelBase(ABC):
                 loss = self.criterion(predicted, labels)
                 total_loss += loss.item()
                 r2_metric.update(predicted, labels)
+                print(f"Predicted: {predicted}, Actual: {labels}")
 
         r2_score = r2_metric.compute()
         print(f'R^2 score of the network on the test images: {r2_score}')
@@ -190,15 +202,17 @@ class MedicalResNetModelBase(ABC):
         torch.save(model_state, save_path)
         print(f"Model saved at {save_path}")
 
-    def load_model(self, checkpoint_path: str):
-        if not os.path.isfile(checkpoint_path):
-            raise FileNotFoundError(f"No checkpoint found at '{checkpoint_path}'")
+    def load_model(self, model_name: str):
 
-        checkpoint: dict = torch.load(os.path.join(self.save_dir, checkpoint_path), map_location=self.device)
+        path = os.path.join(self.save_dir, model_name)
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f"No checkpoint found at '{path}'")
+
+        checkpoint: dict = torch.load(path, map_location=self.device)
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         epoch = checkpoint.get('epoch', 0)
         val_loss = checkpoint.get('val_loss', float('inf'))
 
-        print(f"Model and optimizer state loaded from '{checkpoint_path}'")
+        print(f"Model and optimizer state loaded from '{path}'")
         return epoch, val_loss
