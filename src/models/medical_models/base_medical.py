@@ -180,7 +180,7 @@ class MedicalResNetModelBase(ABC):
                 loss = self.criterion(predicted, labels)
                 total_loss += loss.item()
                 r2_metric.update(predicted, labels)
-                print(f"Predicted: {predicted}, Actual: {labels}")
+                # print(f"Predicted: {predicted}, Actual: {labels}")
 
         r2_score = r2_metric.compute()
         print(f'R^2 score of the network on the test images: {r2_score}')

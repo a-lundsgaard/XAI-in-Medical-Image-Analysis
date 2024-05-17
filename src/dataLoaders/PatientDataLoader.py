@@ -103,7 +103,7 @@ class PatientDataProcessor:
         df_enroll = pd.read_csv(enroll, sep="|", index_col="ID")
         # Create a new DataFrame that contains only the 'Sex' column with converted values
         self.enroll_df = df_enroll[['P02SEX']].replace(
-            {'1: Male': 0, '2: Female': 1})
+            {'1: Male': 0, '2: Female': 1}).infer_objects(copy=False)
         self.enroll_df.rename(columns={'P02SEX': 'Sex'}, inplace=True)
 
     # def get_kellberg_lawrence_grade(self, visit_no: int):

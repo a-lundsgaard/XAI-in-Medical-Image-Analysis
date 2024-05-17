@@ -13,6 +13,8 @@ outputs/
 # ignore logs folder
 cache/
 
+cache_old/
+
 weights/
 
 runs/
