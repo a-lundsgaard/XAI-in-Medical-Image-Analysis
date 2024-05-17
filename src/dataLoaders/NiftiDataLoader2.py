@@ -165,7 +165,7 @@ class NiftiDataLoader:
 
         base_transforms = [
             LoadImaged(keys=["image"]),
-            Lambdad(keys=["image"], func=lambda x: x.half()),  # Convert to float16
+            # Lambdad(keys=["image"], func=lambda x: x.half()),  # Convert to float16
             EnsureChannelFirstD(keys=["image"]),
             ResizeD(keys=["image"], spatial_size=self.spatial_size),
             ScaleIntensityd(keys=["image"]),
