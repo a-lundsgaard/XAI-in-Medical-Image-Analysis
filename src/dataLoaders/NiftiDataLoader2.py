@@ -41,7 +41,7 @@ class NiftiDataLoader:
             self.val_loader: DataLoader = None
             self.train_loader: DataLoader = None
             self.test_loader: DataLoader = None
-            self.available_workers = 4
+            self.available_workers = os.cpu_count()
             self.file_path = os.path.dirname(os.path.abspath(__file__))
             # Save file path for data_list.pkl
             self.data_list_dir = os.path.join(self.file_path, "saved_data_lists")
@@ -155,7 +155,7 @@ class NiftiDataLoader:
                     data_list.append({'image': image_path_right,'label': label_right_knee})
 
         self.data_list = data_list
-        self.save_data_list()
+        # self.save_data_list()
         print(f"Total images detected: {len(data_list)}")
         print(f"Total images: {data_list[:5]}")
 
