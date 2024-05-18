@@ -180,7 +180,7 @@ class MedicalResNetModelBase(ABC):
                 loss = self.criterion(predicted, labels)
                 total_loss += loss.item()
                 r2_metric.update(predicted, labels)
-                print(f"Predicted: {predicted}, Actual: {labels}")
+                # print(f"Predicted: {predicted}, Actual: {labels}")
 
         r2_score = r2_metric.compute()
         print(f'R^2 score of the network on the test images: {r2_score}')
@@ -200,7 +200,8 @@ class MedicalResNetModelBase(ABC):
             'optimizer_state_dict': self.optimizer.state_dict(),
             'val_loss': val_loss,
         }
-        save_path = os.path.join(self.save_dir, f"{self.__class__.__name__}_{self.depth}_{len(self.data_loader.train_ds)}_epoch_{epoch}_val_{round(val_loss, 2)}.pth")
+        height, width = self.data_loader.train_ds[0]["image"].shape[1:]
+        save_path = os.path.join(self.save_dir, f"{self.__class__.__name__}_{self.depth}_{len(self.data_loader.train_ds)}_height_{height}_epoch_{epoch}_val_{round(val_loss, 2)}.pth")
         torch.save(model_state, save_path)
         print(f"Model saved at {save_path}")
 

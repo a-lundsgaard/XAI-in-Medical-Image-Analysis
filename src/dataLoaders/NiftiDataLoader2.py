@@ -41,7 +41,7 @@ class NiftiDataLoader:
             self.val_loader: DataLoader = None
             self.train_loader: DataLoader = None
             self.test_loader: DataLoader = None
-            self.available_workers = 4
+            self.available_workers = os.cpu_count()
             self.file_path = os.path.dirname(os.path.abspath(__file__))
             # Save file path for data_list.pkl
             self.data_list_dir = os.path.join(self.file_path, "saved_data_lists")
@@ -64,19 +64,23 @@ class NiftiDataLoader:
             self.train_ds.shutdown()
     
     def load_data(self, visit_no: int = None, subset_size: int = None, cache: str = "persistent"):
-        if visit_no is None:
-            self.meta_data_loader.load_all_visits()
-        else:
-            self.meta_data_loader.create_meta_data_for_visit(visit_no)
 
-        self.create_data_list(visit_no)
+        isLoaded = self.load_data_list()
+        print(f"Data list loaded: {isLoaded}")
+        if not isLoaded:
+            if visit_no is None:
+                self.meta_data_loader.load_all_visits()
+            else:
+                self.meta_data_loader.create_meta_data_for_visit(visit_no)
+            self.create_data_list(visit_no)
+
         self.train_data, self.val_data, self.test_data = self.split_data()
         self.transforms = self.get_transforms()
 
         if subset_size is not None:
             train_indices = np.random.permutation(len(self.train_data))[:subset_size]
-            val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size*self.cache_rate)]
-            test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size*self.cache_rate)]
+            val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size)-1]
+            test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size)-1]
 
             if cache == "smart":
                 self.train_ds = self.create_smart_cache_dataset(self.train_data, train_indices, cache_rate=self.cache_rate, replace_rate=self.replace_rate)
@@ -151,7 +155,7 @@ class NiftiDataLoader:
                     data_list.append({'image': image_path_right,'label': label_right_knee})
 
         self.data_list = data_list
-        self.save_data_list()
+        # self.save_data_list()
         print(f"Total images detected: {len(data_list)}")
         print(f"Total images: {data_list[:5]}")
 
@@ -215,3 +219,6 @@ class NiftiDataLoader:
         self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, use_thread_workers=True, num_workers=self.available_workers)
         self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
         self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
+        # self.train_loader = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
+        # self.val_loader = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
+        # self.test_loader = DataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False)
