@@ -36,11 +36,9 @@ def verify_all_nifti_files(directory, num_workers=None):
     for result in results:
         file_path, is_valid, error = result
         if is_valid:
-            # Uncomment the next line if you want to print valid file messages
             # print(f"{file_path}: File is valid")
             pass
         else:
-            # Uncomment the next line if you want to print invalid file messages
             # print(f"{file_path}: File is corrupted or invalid ({error})")
             corrupted_files.append(file_path)
     

@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from monai.data import CacheDataset, DataLoader, SmartCacheDataset, PersistentDataset, Dataset, GDSDataset, ThreadDataLoader
-from monai.transforms import Compose, LoadImaged, EnsureChannelFirstD, ScaleIntensityd, ToTensord, ResizeD, Lambdad
+from monai.transforms import Compose, LoadImaged, EnsureChannelFirstD, ScaleIntensityd, ToTensord, ResizeD, Lambdad, NormalizeIntensityD
 from sklearn.model_selection import train_test_split
 from typing import List, Dict
 import numpy as np
@@ -42,8 +42,8 @@ class NiftiDataLoader:
             self.train_loader: DataLoader = None
             self.test_loader: DataLoader = None
             self.available_workers = os.cpu_count()
+
             self.file_path = os.path.dirname(os.path.abspath(__file__))
-            # Save file path for data_list.pkl
             self.data_list_dir = os.path.join(self.file_path, "saved_data_lists")
             self.data_list_file = os.path.join(self.data_list_dir, "data_list.pkl")
 
@@ -63,24 +63,32 @@ class NiftiDataLoader:
         if (isinstance(self.train_ds, SmartCacheDataset)):
             self.train_ds.shutdown()
     
-    def load_data(self, visit_no: int = None, subset_size: int = None, cache: str = "persistent"):
+    def load_data(self, visit_nos: List[int] = None, subset_size: int = None, cache: str = "persistent"):
 
         isLoaded = self.load_data_list()
         print(f"Data list loaded: {isLoaded}")
-        if not isLoaded:
-            if visit_no is None:
-                self.meta_data_loader.load_all_visits()
-            else:
-                self.meta_data_loader.create_meta_data_for_visit(visit_no)
-            self.create_data_list(visit_no)
+        # if not isLoaded:
+        #     if visit_nos is None:
+        #         self.meta_data_loader.load_all_visits()
+        #     else:
+        #         self.meta_data_loader.load_specific_visits(visit_nos)
+        self.create_data_list()
 
         self.train_data, self.val_data, self.test_data = self.split_data()
         self.transforms = self.get_transforms()
 
+        subset_size = subset_size if subset_size is not None else len(self.data_list)
+
+        # print subset size
+        print(f"Subset size: {subset_size}")
+
         if subset_size is not None:
             train_indices = np.random.permutation(len(self.train_data))[:subset_size]
-            val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size)-1]
-            test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size)-1]
+            print(f"Train indices: {train_indices}")
+            val_indices = np.random.permutation(len(self.val_data))
+            print(f"Val indices: {val_indices}")
+            test_indices = np.random.permutation(len(self.test_data))
+            print(f"Test indices: {test_indices}")
 
             if cache == "smart":
                 self.train_ds = self.create_smart_cache_dataset(self.train_data, train_indices, cache_rate=self.cache_rate, replace_rate=self.replace_rate)
@@ -134,30 +142,74 @@ class NiftiDataLoader:
             return self.data_list
 
         if visit_no is None:
-            visits = self.meta_data_loader.visits.keys()
+            visits = self.meta_data_loader.data.keys()
             print(f"Visits: {visits}")
         else:
             visits = [visit_no]
 
         for v_no in visits:
             visit: str = self.meta_data_loader.get_visit(v_no)
+            # print length of data
+            print(f"Length of data: {len(self.meta_data_loader.get_data())}")
             for _, row in self.meta_data_loader.get_data().iterrows():
                 image_path_right = self.get_image_path(row, right, visit)
                 image_path_left = self.get_image_path(row, left, visit)
 
-                # label = row[visit + self.meta_data_loader.metricDict["AGE"]]
-                label_right_knee = row[visit + "WOMKPR"]
-                label_left_knee = row[visit + "WOMKPL"]
+                # print index of row
+                # print(f"Index of row: {row.name}")
 
-                if os.path.exists(image_path_left):
-                    data_list.append( {'image': image_path_left, 'label': label_left_knee})
-                if os.path.exists(image_path_right):
-                    data_list.append({'image': image_path_right,'label': label_right_knee})
+                # label = row[visit + self.meta_data_loader.metricDict["AGE"]]
+                # varible_right = "WOMKPR"
+                # varible_left = "WOMKPL"
+
+                # varible_right = "WOMKPR"
+                # varible_left = "WOMKPL"
+
+                # Define the variables for the right and left knee
+                variables_right = ["BLFPDR", "ALTPDR", "IBMFPDR"]
+                variables_left = ["BLFPDL", "ALTPDL", "IBMFPDL"]
+
+                # Collect the labels for each variable
+                labels_right_knee = {var: row[visit + var] for var in variables_right}
+                labels_left_knee = {var: row[visit + var] for var in variables_left}
+
+                print(f"Labels left knee: {labels_left_knee}")
+
+                # print labels for right and left knee
+                # print(f"Labels right knee: {labels_right_knee.values()}")
+                # print(f"Labels left knee: {labels_left_knee}")
+
+                # check if all labels are not NaN
+                all_right = all(pd.notna(list(labels_right_knee.values())))
+                all_left = all(pd.notna(list(labels_left_knee.values())))
+
+                # Check if all labels are not NaN
+                if all_right==True and os.path.exists(image_path_right):
+                    data_list.append({'image': image_path_right, 'label': labels_right_knee})
+                    print(f"Labels right knee: {labels_right_knee}")
+                
+                if all_left==True and os.path.exists(image_path_left):
+                    data_list.append({'image': image_path_left, 'label': labels_left_knee})
+                    print(f"Labels left knee: {labels_left_knee}")
+
+
+
+                # label_right_knee = row[visit + varible_right]
+                # label_left_knee = row[visit + varible_left]
+
+                # if os.path.exists(image_path_left):
+                #     data_list.append( {'image': image_path_left, 'label': label_left_knee})
+                # if os.path.exists(image_path_right):
+                #     data_list.append({'image': image_path_right,'label': label_right_knee})
 
         self.data_list = data_list
         # self.save_data_list()
         print(f"Total images detected: {len(data_list)}")
-        print(f"Total images: {data_list[:5]}")
+        # ensure that the batch size is not larger than the number of images
+        max_b_size = int(len(self.data_list)*self.val_size)
+        
+        self.batch_size = min(self.batch_size, max_b_size if max_b_size > 0 else 1)
+        # print(f"Total images: {data_list[:5]}")
 
         return data_list
 
@@ -181,17 +233,19 @@ class NiftiDataLoader:
                     raise ValueError("All custom transforms must be of type MapTransform")
 
         base_transforms = [
-            LoadImaged(keys=["image"]),
+            LoadImaged(keys=["image"], ensure_channel_first=True),
             # Lambdad(keys=["image"], func=lambda x: x.half()),  # Convert to float16
-            EnsureChannelFirstD(keys=["image"]),
             ResizeD(keys=["image"], spatial_size=self.spatial_size),
             ScaleIntensityd(keys=["image"]),
+            # NormalizeIntensityD(keys=["image"], nonzero=True, channel_wise=True),
         ]
 
         if self.custom_transforms:
             base_transforms.extend(self.custom_transforms)
 
-        base_transforms.append(ToTensord(keys=["image"]))
+        # base_transforms.append(ToTensord(keys=["image"]))
+
+        base_transforms.append(ToTensord(keys=["image"])) # TODO Add label to keys
         
         return Compose(base_transforms)
     

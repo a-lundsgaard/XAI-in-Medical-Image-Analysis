@@ -83,17 +83,56 @@ class PatientDataProcessor:
         if visit_no and visit_no in self.data:
             return self.data[visit_no]
         """Combine and display all collected data."""
+
+        # print(f"Total number of subjects: {self.data}")
         combined_data: pd.DataFrame = pd.concat(self.data.values(), axis=1)
         # replace V0* from the column names
         # combined_data.columns = [col[0:3] + "_" + col[3:]
         #                          for col in combined_data.columns]
         # print(f"Total length of the dataframe: {len(combined_data)}")
         return combined_data
+    
+
+    def create_meta_data_for_visit(self, visit_no: int):
+        visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
+        # self.visit = visit
+        # self.visits[visit_no] = visit
+        # df_visit = self.load_data(f"AllClinical{visit[1:]}.txt")
+        # if df_visit.empty:
+        #     return
+
+        # df_visit = df_visit[df_visit.index.isin(self.subjects)]
+        # variables_of_interest = self.define_variables_of_interest(
+        #     visit, df_visit.columns)
+        # df_visit = df_visit[variables_of_interest]
+
+        # self.clean_data(df_visit)
+        # self.get_enrollment_data()
+        # # print(f"Enrollment data: {self.enroll_df}")
+        # self.fill_missing_with_mean(df_visit, variables_of_interest)
+
+        # df_visit = df_visit.merge(
+        #     self.enroll_df, left_index=True, right_index=True, how='left')
+        
+        # kmri_data = self.load_kMRI_data(visit_no)
+        # if kmri_data is not None:
+        #     df_visit = df_visit.merge(
+        #         kmri_data, left_index=True, right_index=True)
+        
+        # self.data[visit_no] = df_visit
+        self.data[visit_no] = self.load_kMRI_data(visit_no)
+        # print length of the dataframe
+        print(f"Length of the dataframe: {len(self.data[visit_no])}")
+        # self.get_kellberg_lawrence_grade(visit_no)
+        # self.load_kMRI_data(visit_no)
+
+        return self.data
 
 
     def get_visit(self, visit_no: int = None):
-        if visit_no in self.visits:
-            return self.visits[visit_no]
+        if visit_no in self.data:
+            visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
+            return visit
         else : 
             raise ValueError(f"Visit {visit_no} not created. Please create the visit")
     
@@ -106,8 +145,218 @@ class PatientDataProcessor:
             {'1: Male': 0, '2: Female': 1}).infer_objects(copy=False)
         self.enroll_df.rename(columns={'P02SEX': 'Sex'}, inplace=True)
 
-    # def get_kellberg_lawrence_grade(self, visit_no: int):
-    #     file_path = self.base_path + "KL" + str(visit_no) + ".txt"
+
+    # def load_kMRI_data(self, visit_no: int):
+    #     visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
+    #     print(f"Loading kMRI data for visit {visit}")
+    #     df = self.load_data(f"kMRI_QCart_Eckstein{visit[1:]}.txt")
+    #     if df.empty:
+    #         return
+    #     df = df[df.index.isin(self.subjects)]
+
+    #     # print(f"Loaded kMRI data for visit {df}")
+
+    #     variables = ["BLFPD", "ALTPD", "IBMFPD"]
+    #     for var in variables:
+    #         right_var = f"{visit}{var}R"
+    #         left_var = f"{visit}{var}L"
+    #         df[right_var] = df.apply(lambda row: row[f"{visit}{var}"] if row['SIDE'] == '1: Right' else np.nan, axis=1)
+    #         df[left_var] = df.apply(lambda row: row[f"{visit}{var}"] if row['SIDE'] == '2: Left' else np.nan, axis=1)
+
+    #     variables_with_suffix = [f"{visit}{var}R" for var in variables] + [f"{visit}{var}L" for var in variables]
+    #     df = df[variables_with_suffix]
+
+    #     return df
+    
+    # def load_kMRI_data(self, visit_no: int):
+    #     visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
+    #     print(f"Loading kMRI data for visit {visit}")
+    #     # df = self.load_data(f"kMRI_QCart_Eckstein{visit[1:]}.txt", index_col="ID")
+    #     name = f"kMRI_QCart_Eckstein{visit[1:]}.txt"
+    #     path = f"{self.base_path}/{name}"
+
+    #     df = pd.read_csv(path, sep="|", header=0)
+    #     if df.empty:
+    #         print(f"No data found for visit {visit}")
+    #         return
+    #     # df = df[df.index.isin(self.subjects)]
+    #     # if df.empty:
+    #     #     print(f"No matching subjects found for visit {visit}")
+    #     #     return
+        
+    #     return df
+    
+    def load_kMRI_data(self, visit_no: int):
+        visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
+        print(f"Loading kMRI data for visit {visit}")
+        name = f"kMRI_QCart_Eckstein{visit[1:]}.txt"
+        path = f"{self.base_path}/{name}"
+
+        df = pd.read_csv(path, sep="|", header=0)
+        if df.empty:
+            print(f"No data found for visit {visit}")
+            return
+        
+        # Variables of interest
+        variables = ["BLFPD", "ALTPD", "IBMFPD"]
+        variables_with_prefix = [f"{visit}{var}" for var in variables]
+
+        # Filter the dataframe to only include the variables of interest
+        variables_with_side = ['ID', 'SIDE'] + variables_with_prefix
+        df = df[variables_with_side]
+
+        df['SIDE'] = df['SIDE'].astype(str)
+        # Aggregate left and right rows by taking the mean for each ID
+        # df_left = df["2" in df['SIDE'] == '2: Left']
+        print(df['SIDE'].dtype)
+        df_left = df[df['SIDE'].str.contains('2')]
+        df_left = df_left.drop(columns=['SIDE'])
+        df_left = df_left.groupby('ID').mean().add_suffix('L')
+
+        df_right = df[df['SIDE'].str.contains('1')]
+        df_right = df_right.drop(columns=['SIDE'])
+        df_right = df_right.groupby('ID').mean().add_suffix('R')
+
+        # return df_right
+
+                # Merge left and right dataframes on ID
+        df_combined = pd.merge(df_left, df_right, left_index=True, right_index=True)
+
+        # Set ID as the index
+        df_combined.index.name = 'ID'
+
+        # merge with self.data[visit_no]
+        # df_combined = pd.merge(self.data[visit_no], df_combined, left_index=True, right_index=True, how='left')
+        # return df_right
+        # print length of the dataframe
+        print(f"Length of the dataframe: {len(df_combined)}")
+        return df_combined
+
+
+        # check what type of data is in the dataframe
+        # print(df_left.dtypes)
+
+        # for each id in the left dataframe, get the mean of the variables
+        # df_left = df_left.groupby('ID').mean().add_suffix('L')
+
+        return df_left
+
+        df_right = df[df['SIDE'] == '1: Right'].groupby('ID').mean().add_suffix('R')
+
+        return df_left, df_right
+
+        # Merge left and right dataframes on ID
+        df_combined = pd.merge(df_left, df_right, left_index=True, right_index=True, how='outer')
+
+        return df_combined
+
+        # Set ID as the index
+        # df_combined.index.name = 'ID'
+
+        # print(df_combined.head())  # Print the first few rows for debugging
+
+        # return df_combined
+
+        # for iterate over all rows and create new columns for right and left side
+
+        # variables = ["BLFPD", "ALTPD", "IBMFPD"]
+        # for var in variables:
+        #     visit_var = f"{visit}{var}"
+        #     if visit_var not in df.columns:
+        #         print(f"Variable {visit_var} not found in the dataframe")
+        #         continue
+        #     right_var = f"{visit}{var}R"
+        #     left_var = f"{visit}{var}L"
+
+        #     df[right_var] = df.apply(lambda row: row[visit_var] if row['SIDE'] == '1: Right' else np.nan, axis=1)
+        #     df[left_var] = df.apply(lambda row: row[visit_var] if row['SIDE'] == '2: Left' else np.nan, axis=1)
+
+        # # Only keep the new right and left columns
+        # variables_with_suffix = [f"{visit}{var}R" for var in variables] + [f"{visit}{var}L"]
+        # df_subset = df[variables_with_suffix]
+
+        # # Group by ID and take the mean to handle duplicates
+        # df_grouped = df_subset.groupby(df_subset.index).mean()
+
+        # print(df_grouped.head())  # Print the first few rows for debugging
+
+        return df_grouped
+        
+        # variables = ["BLFPD", "ALTPD", "IBMFPD"]
+        # # variables = ["IBLFPD", "ALTPD", "IBMFPD"]
+        # for var in variables:
+        #     visit_var = f"{visit}{var}"
+        #     if visit_var not in df.columns:
+        #         print(f"Variable {visit_var} not found in the dataframe")
+        #         continue
+        #     right_var = f"{visit}{var}R"
+        #     left_var = f"{visit}{var}L"
+            
+        #     df[right_var] = df.apply(lambda row: row[visit_var] if "1" in row['SIDE'] else np.nan, axis=1)
+        #     df[left_var] = df.apply(lambda row: row[visit_var] if "2" in row['SIDE'] else np.nan, axis=1)
+
+        # # Filter out the rows with NaN for the specific side columns
+        # for var in variables:
+        #     right_var = f"{visit}{var}R"
+        #     left_var = f"{visit}{var}L"
+        #     df[right_var] = df[right_var].fillna(method='ffill')
+        #     df[left_var] = df[left_var].fillna(method='ffill')
+
+        # variables_with_suffix = [f"{visit}{var}R" for var in variables] + [f"{visit}{var}L" for var in variables]
+        # df = df[variables_with_suffix]
+
+        # # Aggregate data by ID to handle duplicates
+        # df = df.groupby(df.index).mean()
+
+        # print(df.head())  # Print the first few rows for debugging
+
+        return df
+
+        # variables = ["IBLFPD", "ALTPD", "IBMFPD"]
+        # for var in variables:
+        #     visit_var = f"{visit}{var}"
+        #     if visit_var not in df.columns:
+        #         print(f"Variable {visit_var} not found in the dataframe")
+        #         continue
+        #     right_var = f"{visit}{var}R"
+        #     left_var = f"{visit}{var}L"
+        #     df[right_var] = df.apply(lambda row: row[visit_var] if "1" in row['SIDE'] else np.nan, axis=1)
+        #     df[left_var] = df.apply(lambda row: row[visit_var] if "2" in row['SIDE'] else np.nan, axis=1)
+
+        # variables_with_suffix = [f"{visit}{var}R" for var in variables] + [f"{visit}{var}L" for var in variables]
+        # df = df[variables_with_suffix]
+
+        # # Aggregate data by ID to handle duplicates
+        # df = df.groupby(df.index).mean()
+
+        # print(df.head())  # Print the first few rows for debugging
+
+        # return df
+
+
+
+        # Merge the kMRI data with the existing data
+        # self.data[visit_no] = self.data[visit_no].merge(
+        #     df, left_index=True, right_index=True, how='left')
+
+    def get_kellberg_lawrence_grade(self, visit_no: int):
+        visit = "0" + str(visit_no) if visit_no < 10 else str(visit_no)
+        df = self.load_data("kxr_sq_bu" + visit[1:] + ".txt", "ID")
+        if df.empty:
+            raise ValueError(f"Data not found for visit {visit_no}")
+        df = df[df.index.isin(self.subjects)]
+        column_name = 'V' + visit + 'XRKL'
+        df = df[[column_name]]
+        if df.empty:
+            column_name = 'v' + visit + 'XRKL'
+            df = df[[column_name]]
+        if df.empty:
+            raise ValueError(f"Data not found for visit {visit_no}")
+        # df.rename(columns={'XRKL': 'KLGrade'}, inplace=True)
+        self.data[visit_no] = self.data[visit_no].merge(
+            df, left_index=True, right_index=True, how='left')
+        return self.data
+
 
     def load_data(self, file_name: str, index_col: str = "ID") -> pd.DataFrame:
         """Load data from a given file within the base path, handling pipe-delimited format."""
@@ -122,28 +371,9 @@ class PatientDataProcessor:
         for visit_no in range(0, 12):  # Assuming there are 10 visits
             self.create_meta_data_for_visit(visit_no)
 
-    def create_meta_data_for_visit(self, visit_no: int):
-        visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
-        # self.visit = visit
-        self.visits[visit_no] = visit
-        df_visit = self.load_data(f"AllClinical{visit[1:]}.txt")
-        if df_visit.empty:
-            return
-
-        df_visit = df_visit[df_visit.index.isin(self.subjects)]
-        variables_of_interest = self.define_variables_of_interest(
-            visit, df_visit.columns)
-        df_visit = df_visit[variables_of_interest]
-
-        self.clean_data(df_visit)
-        self.get_enrollment_data()
-        # print(f"Enrollment data: {self.enroll_df}")
-
-        self.fill_missing_with_mean(df_visit, variables_of_interest)
-        df_visit = df_visit.merge(
-            self.enroll_df, left_index=True, right_index=True, how='left')
-        self.data[visit_no] = df_visit
-        return self.data
+    def load_specific_visits(self, visit_nos: list[int]):
+        for visit_no in visit_nos:
+            self.create_meta_data_for_visit(visit_no)
 
     def fill_missing_with_mean(self, dataframe: pd.DataFrame, variables_of_interest: list[str]):
         """Fill missing variables with the mean of available data."""
@@ -154,11 +384,17 @@ class PatientDataProcessor:
 
     def define_variables_of_interest(self, visit: str, available_columns: pd.Index) -> list:
         """Dynamically define variables of interest based on the visit code and check if they exist in the DataFrame."""
-        base_vars = ["BMI", "AGE"]
-        common_vars = ["WOMTSL", "WOMTSR", "KQOL2", "PASE"]
-        pain_vars = ["DILKN10", "DILKN11", "DILKN2",
-                     "DIRKN10", "DIRKN11", "DIRKN2", "WOMKPL", "WOMKPR"]
-        follow_up_vars = ["P01BMI"]
+        # base_vars = ["BMI", "AGE"]
+        base_vars = ["AGE"]
+
+        # common_vars = ["WOMTSL", "WOMTSR", "KQOL2", "PASE"]
+        common_vars = []
+        # pain_vars = ["DILKN10", "DILKN11", "DILKN2",
+        #              "DIRKN10", "DIRKN11", "DIRKN2", "WOMKPL", "WOMKPR", "XRKL"]
+        pain_vars = ["WOMKPL", "WOMKPR", "XRKL"]
+        # follow_up_vars = ["P01BMI"]
+        follow_up_vars = []
+
         all_vars_to_prefix = base_vars + common_vars + pain_vars
         all_vars_to_prefix = [visit + var for var in all_vars_to_prefix]
         all_vars = follow_up_vars + all_vars_to_prefix
