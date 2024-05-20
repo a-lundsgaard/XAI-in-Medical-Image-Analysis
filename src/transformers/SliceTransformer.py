@@ -41,7 +41,10 @@ class SliceAggregateTransform(MapTransform):
         sagittal_slice = img_data[depth // 2, :, :]
 
         # Stack each slice into a single 3-channel image
-        combined_image = np.stack((axial_slice, coronal_slice, sagittal_slice), axis=0)
+        combined_image = np.stack(( coronal_slice, sagittal_slice), axis=0)
+
+        #combined_image = np.stack((coronal_slice), axis=0)
+
 
         return combined_image
 
@@ -65,13 +68,13 @@ class SliceAggregateTransform(MapTransform):
                         img_data[:, :, width//2], 
                         img_data[:, :, width//2 + 1]]
 
-        coronal_slices = [img_data[:, height//2 - 1, :], 
+        coronal_slices = [img_data[:, height//2 - 2, :], 
                           img_data[:, height//2, :], 
-                          img_data[:, height//2 + 1, :]]
+                          img_data[:, height//2 + 2, :]]
 
-        sagittal_slices = [img_data[depth//2 - 1, :, :], 
+        sagittal_slices = [img_data[depth//2 - 2, :, :], 
                            img_data[depth//2, :, :], 
-                           img_data[depth//2 + 1, :, :]]
+                           img_data[depth//2 + 2, :, :]]
 
         # Stack each set of slices into separate channels
         axial_image = np.stack(axial_slices, axis=0)
@@ -80,5 +83,5 @@ class SliceAggregateTransform(MapTransform):
 
         # Combine the three directional images into a single multichannel image
         # combined = np.array([axial_image, coronal_image, sagittal_image])
-        combined = np.concatenate((axial_image, coronal_image, sagittal_image), axis=0)
+        combined = np.concatenate((coronal_image, sagittal_image), axis=0)
         return combined

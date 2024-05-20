@@ -52,7 +52,8 @@ self.metricDict = {
 class PatientDataProcessor:
     def __init__(
         self,
-        base_path: str = "/Users/askelundsgaard/Documents/datalogi/6-semester/Bachelor/XAI-in-Medical-Image-Analysis/datasets/meta_data/OAIdata21/"
+        base_path: str = "/Users/askelundsgaard/Documents/datalogi/6-semester/Bachelor/XAI-in-Medical-Image-Analysis/datasets/meta_data/OAIdata21/",
+        labels = ["BLFPD", "ALTPD", "IBMFPD"]
     ):
         self.base_path = base_path
         self.data: dict[str, pd.DataFrame] = {}
@@ -62,6 +63,7 @@ class PatientDataProcessor:
                                    delimiter='|', skiprows=1, usecols=(0,), dtype=int)
         self.visit: str = None
         self.visits: Dict[int, str] = {}
+        self.labels = labels
 
         self.metricDict = {
             "BMI": "BMI",
@@ -198,16 +200,19 @@ class PatientDataProcessor:
             return
         
         # Variables of interest
-        variables = ["BLFPD", "ALTPD", "IBMFPD"]
+        variables = self.labels
         variables_with_prefix = [f"{visit}{var}" for var in variables]
 
         # Filter the dataframe to only include the variables of interest
         variables_with_side = ['ID', 'SIDE'] + variables_with_prefix
         df = df[variables_with_side]
 
+        # if emtpy return the dataframe
+        if df.empty:
+            print(f"Labels: {self.labels} not+ found for visit {visit}")
+            return df
+
         df['SIDE'] = df['SIDE'].astype(str)
-        # Aggregate left and right rows by taking the mean for each ID
-        # df_left = df["2" in df['SIDE'] == '2: Left']
         print(df['SIDE'].dtype)
         df_left = df[df['SIDE'].str.contains('2')]
         df_left = df_left.drop(columns=['SIDE'])
@@ -216,128 +221,14 @@ class PatientDataProcessor:
         df_right = df[df['SIDE'].str.contains('1')]
         df_right = df_right.drop(columns=['SIDE'])
         df_right = df_right.groupby('ID').mean().add_suffix('R')
-
-        # return df_right
-
-                # Merge left and right dataframes on ID
         df_combined = pd.merge(df_left, df_right, left_index=True, right_index=True)
 
         # Set ID as the index
         df_combined.index.name = 'ID'
-
-        # merge with self.data[visit_no]
-        # df_combined = pd.merge(self.data[visit_no], df_combined, left_index=True, right_index=True, how='left')
-        # return df_right
-        # print length of the dataframe
         print(f"Length of the dataframe: {len(df_combined)}")
         return df_combined
 
 
-        # check what type of data is in the dataframe
-        # print(df_left.dtypes)
-
-        # for each id in the left dataframe, get the mean of the variables
-        # df_left = df_left.groupby('ID').mean().add_suffix('L')
-
-        return df_left
-
-        df_right = df[df['SIDE'] == '1: Right'].groupby('ID').mean().add_suffix('R')
-
-        return df_left, df_right
-
-        # Merge left and right dataframes on ID
-        df_combined = pd.merge(df_left, df_right, left_index=True, right_index=True, how='outer')
-
-        return df_combined
-
-        # Set ID as the index
-        # df_combined.index.name = 'ID'
-
-        # print(df_combined.head())  # Print the first few rows for debugging
-
-        # return df_combined
-
-        # for iterate over all rows and create new columns for right and left side
-
-        # variables = ["BLFPD", "ALTPD", "IBMFPD"]
-        # for var in variables:
-        #     visit_var = f"{visit}{var}"
-        #     if visit_var not in df.columns:
-        #         print(f"Variable {visit_var} not found in the dataframe")
-        #         continue
-        #     right_var = f"{visit}{var}R"
-        #     left_var = f"{visit}{var}L"
-
-        #     df[right_var] = df.apply(lambda row: row[visit_var] if row['SIDE'] == '1: Right' else np.nan, axis=1)
-        #     df[left_var] = df.apply(lambda row: row[visit_var] if row['SIDE'] == '2: Left' else np.nan, axis=1)
-
-        # # Only keep the new right and left columns
-        # variables_with_suffix = [f"{visit}{var}R" for var in variables] + [f"{visit}{var}L"]
-        # df_subset = df[variables_with_suffix]
-
-        # # Group by ID and take the mean to handle duplicates
-        # df_grouped = df_subset.groupby(df_subset.index).mean()
-
-        # print(df_grouped.head())  # Print the first few rows for debugging
-
-        return df_grouped
-        
-        # variables = ["BLFPD", "ALTPD", "IBMFPD"]
-        # # variables = ["IBLFPD", "ALTPD", "IBMFPD"]
-        # for var in variables:
-        #     visit_var = f"{visit}{var}"
-        #     if visit_var not in df.columns:
-        #         print(f"Variable {visit_var} not found in the dataframe")
-        #         continue
-        #     right_var = f"{visit}{var}R"
-        #     left_var = f"{visit}{var}L"
-            
-        #     df[right_var] = df.apply(lambda row: row[visit_var] if "1" in row['SIDE'] else np.nan, axis=1)
-        #     df[left_var] = df.apply(lambda row: row[visit_var] if "2" in row['SIDE'] else np.nan, axis=1)
-
-        # # Filter out the rows with NaN for the specific side columns
-        # for var in variables:
-        #     right_var = f"{visit}{var}R"
-        #     left_var = f"{visit}{var}L"
-        #     df[right_var] = df[right_var].fillna(method='ffill')
-        #     df[left_var] = df[left_var].fillna(method='ffill')
-
-        # variables_with_suffix = [f"{visit}{var}R" for var in variables] + [f"{visit}{var}L" for var in variables]
-        # df = df[variables_with_suffix]
-
-        # # Aggregate data by ID to handle duplicates
-        # df = df.groupby(df.index).mean()
-
-        # print(df.head())  # Print the first few rows for debugging
-
-        return df
-
-        # variables = ["IBLFPD", "ALTPD", "IBMFPD"]
-        # for var in variables:
-        #     visit_var = f"{visit}{var}"
-        #     if visit_var not in df.columns:
-        #         print(f"Variable {visit_var} not found in the dataframe")
-        #         continue
-        #     right_var = f"{visit}{var}R"
-        #     left_var = f"{visit}{var}L"
-        #     df[right_var] = df.apply(lambda row: row[visit_var] if "1" in row['SIDE'] else np.nan, axis=1)
-        #     df[left_var] = df.apply(lambda row: row[visit_var] if "2" in row['SIDE'] else np.nan, axis=1)
-
-        # variables_with_suffix = [f"{visit}{var}R" for var in variables] + [f"{visit}{var}L" for var in variables]
-        # df = df[variables_with_suffix]
-
-        # # Aggregate data by ID to handle duplicates
-        # df = df.groupby(df.index).mean()
-
-        # print(df.head())  # Print the first few rows for debugging
-
-        # return df
-
-
-
-        # Merge the kMRI data with the existing data
-        # self.data[visit_no] = self.data[visit_no].merge(
-        #     df, left_index=True, right_index=True, how='left')
 
     def get_kellberg_lawrence_grade(self, visit_no: int):
         visit = "0" + str(visit_no) if visit_no < 10 else str(visit_no)

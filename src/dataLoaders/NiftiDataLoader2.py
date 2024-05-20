@@ -7,8 +7,6 @@ from typing import List, Dict
 import numpy as np
 from torch.utils.data import Subset
 from src.dataLoaders.PatientDataLoader import PatientDataProcessor
-import torch
-# import map_transforms
 from monai.transforms import MapTransform
 from typing import Optional, List, Any, Tuple
 import pickle
@@ -19,13 +17,13 @@ class NiftiDataLoader:
     def __init__(
             self, 
             data_dir: str,
-            test_size=0.2,
+            test_size=0.1,
             val_size=0.1,
             batch_size=2,
             cache_rate=0.5,
             replace_rate=0.2,
             meta_data_loader = PatientDataProcessor,
-            spatial_size: Tuple[int, int, int] | Tuple[int, int] = (128, 128, 128),
+            spatial_resize: Tuple[int, int, int] | Tuple[int, int] = (128, 128, 128),
             custom_transforms: Optional[List[MapTransform]] = None,  # Allow passing custom transforms,
         ):
             self.data_dir = data_dir
@@ -35,7 +33,7 @@ class NiftiDataLoader:
             self.cache_rate = cache_rate
             self.meta_data_loader = meta_data_loader
             self.custom_transforms = custom_transforms
-            self.spatial_size = spatial_size
+            self.spatial_size = spatial_resize
             self.replace_rate = replace_rate
 
             self.val_loader: DataLoader = None
@@ -85,9 +83,9 @@ class NiftiDataLoader:
         if subset_size is not None:
             train_indices = np.random.permutation(len(self.train_data))[:subset_size]
             print(f"Train indices: {train_indices}")
-            val_indices = np.random.permutation(len(self.val_data))
+            val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size)]
             print(f"Val indices: {val_indices}")
-            test_indices = np.random.permutation(len(self.test_data))
+            test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size)]
             print(f"Test indices: {test_indices}")
 
             if cache == "smart":
@@ -149,35 +147,21 @@ class NiftiDataLoader:
 
         for v_no in visits:
             visit: str = self.meta_data_loader.get_visit(v_no)
-            # print length of data
             print(f"Length of data: {len(self.meta_data_loader.get_data())}")
             for _, row in self.meta_data_loader.get_data().iterrows():
                 image_path_right = self.get_image_path(row, right, visit)
                 image_path_left = self.get_image_path(row, left, visit)
 
-                # print index of row
-                # print(f"Index of row: {row.name}")
-
                 # label = row[visit + self.meta_data_loader.metricDict["AGE"]]
                 # varible_right = "WOMKPR"
-                # varible_left = "WOMKPL"
+                # variables_left = ["BLFPDL", "ALTPDL", "IBMFPDL"]
 
-                # varible_right = "WOMKPR"
-                # varible_left = "WOMKPL"
-
-                # Define the variables for the right and left knee
-                variables_right = ["BLFPDR", "ALTPDR", "IBMFPDR"]
-                variables_left = ["BLFPDL", "ALTPDL", "IBMFPDL"]
+                # variables = ["BLFPD", "ALTPD", "IBMFPD"]
+                variables = self.meta_data_loader.labels
 
                 # Collect the labels for each variable
-                labels_right_knee = {var: row[visit + var] for var in variables_right}
-                labels_left_knee = {var: row[visit + var] for var in variables_left}
-
-                print(f"Labels left knee: {labels_left_knee}")
-
-                # print labels for right and left knee
-                # print(f"Labels right knee: {labels_right_knee.values()}")
-                # print(f"Labels left knee: {labels_left_knee}")
+                labels_right_knee = {var: row[visit + var + "R"] for var in variables}
+                labels_left_knee = {var: row[visit + var + "L"] for var in variables}
 
                 # check if all labels are not NaN
                 all_right = all(pd.notna(list(labels_right_knee.values())))
@@ -192,25 +176,9 @@ class NiftiDataLoader:
                     data_list.append({'image': image_path_left, 'label': labels_left_knee})
                     print(f"Labels left knee: {labels_left_knee}")
 
-
-
-                # label_right_knee = row[visit + varible_right]
-                # label_left_knee = row[visit + varible_left]
-
-                # if os.path.exists(image_path_left):
-                #     data_list.append( {'image': image_path_left, 'label': label_left_knee})
-                # if os.path.exists(image_path_right):
-                #     data_list.append({'image': image_path_right,'label': label_right_knee})
-
         self.data_list = data_list
         # self.save_data_list()
         print(f"Total images detected: {len(data_list)}")
-        # ensure that the batch size is not larger than the number of images
-        max_b_size = int(len(self.data_list)*self.val_size)
-        
-        self.batch_size = min(self.batch_size, max_b_size if max_b_size > 0 else 1)
-        # print(f"Total images: {data_list[:5]}")
-
         return data_list
 
     def split_data(self):
@@ -243,10 +211,7 @@ class NiftiDataLoader:
         if self.custom_transforms:
             base_transforms.extend(self.custom_transforms)
 
-        # base_transforms.append(ToTensord(keys=["image"]))
-
         base_transforms.append(ToTensord(keys=["image"])) # TODO Add label to keys
-        
         return Compose(base_transforms)
     
     def save_data_list(self):
