@@ -319,7 +319,7 @@ class PatientDataProcessor:
         common_vars = []
         # pain_vars = ["DILKN10", "DILKN11", "DILKN2",
         #              "DIRKN10", "DIRKN11", "DIRKN2", "WOMKPL", "WOMKPR", "XRKL"]
-        pain_vars = ["WOMKPL", "WOMKPR", "XRKL"]
+        pain_vars = ["WOMKPL", "WOMKPR"]
         # follow_up_vars = ["P01BMI"]
 
         all_vars_to_prefix = base_vars + common_vars + pain_vars
