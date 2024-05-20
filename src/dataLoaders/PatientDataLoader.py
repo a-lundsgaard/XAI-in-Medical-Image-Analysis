@@ -148,7 +148,7 @@ class PatientDataProcessor:
         #         kmri_data, left_index=True, right_index=True)
         
         # self.data[visit_no] = df_visit
-        self.data[visit_no] = self.load_kMRI_data(visit_no)
+        self.data[visit_no] = self.load_kMRI_data(visit_no, labels = self.labels)
         # print length of the dataframe
         print(f"Length of the dataframe: {len(self.data[visit_no])}")
         # self.get_kellberg_lawrence_grade(visit_no)
@@ -214,7 +214,14 @@ class PatientDataProcessor:
         
     #     return df
     
-    def load_kMRI_data(self, visit_no: int):
+    def load_all_kMRI_data(self, labels: list[str] = ["BLFPD", "ALTPD", "IBMFPD"]):
+        all_data = pd.DataFrame()
+        for i in range(0, 12):
+            all_data =pd.concat([all_data, self.load_kMRI_data(i, labels)], axis=1)
+
+        return all_data
+
+    def load_kMRI_data(self, visit_no: int, labels: list[str] = ["BLFPD", "ALTPD", "IBMFPD"]):
         visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
         print(f"Loading kMRI data for visit {visit}")
         name = f"kMRI_QCart_Eckstein{visit[1:]}.txt"
@@ -230,7 +237,7 @@ class PatientDataProcessor:
             return pd.DataFrame() 
         
         # Variables of interest
-        variables = self.labels
+        variables = labels
         variables_with_prefix = [f"{visit}{var}" for var in variables]
 
         # Filter the dataframe to only include the variables of interest
