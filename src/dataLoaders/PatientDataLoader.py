@@ -82,6 +82,7 @@ class PatientDataProcessor:
 
 
     def get_data(self, visit_no: int = None):
+
         if visit_no and visit_no in self.data:
             return self.data[visit_no]
         """Combine and display all collected data."""
@@ -93,6 +94,31 @@ class PatientDataProcessor:
         #                          for col in combined_data.columns]
         # print(f"Total length of the dataframe: {len(combined_data)}")
         return combined_data
+    
+    def get_all_clinical_data(self):
+        all_data = pd.DataFrame()
+        for visit_no in range(0, 12):
+            all_data = pd.concat([all_data, self.get_clinical_data(visit_no)], axis=1)
+        return all_data    
+    
+    def get_clinical_data(self, visit_no: int):
+        visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
+        self.visit = visit
+        self.visits[visit_no] = visit
+        df_visit = self.load_data(f"AllClinical{visit[1:]}.txt")
+        if df_visit.empty:
+            return
+
+        df_visit = df_visit[df_visit.index.isin(self.subjects)]
+        variables_of_interest = self.define_variables_of_interest(
+            visit, df_visit.columns)
+        df_visit = df_visit[variables_of_interest]
+
+        self.clean_data(df_visit)
+        self.get_enrollment_data()
+        # print(f"Enrollment data: {self.enroll_df}")
+        self.fill_missing_with_mean(df_visit, variables_of_interest)
+        return df_visit
     
 
     def create_meta_data_for_visit(self, visit_no: int):
@@ -194,10 +220,14 @@ class PatientDataProcessor:
         name = f"kMRI_QCart_Eckstein{visit[1:]}.txt"
         path = f"{self.base_path}/{name}"
 
-        df = pd.read_csv(path, sep="|", header=0)
-        if df.empty:
-            print(f"No data found for visit {visit}")
-            return
+        try:
+            df = pd.read_csv(path, sep="|", header=0)
+            if df.empty:
+                print(f"No data found for visit {visit}")
+                return
+        except Exception as e:
+            print("No file found at: ", path, "skipping.")
+            return pd.DataFrame() 
         
         # Variables of interest
         variables = self.labels
@@ -284,11 +314,9 @@ class PatientDataProcessor:
         #              "DIRKN10", "DIRKN11", "DIRKN2", "WOMKPL", "WOMKPR", "XRKL"]
         pain_vars = ["WOMKPL", "WOMKPR", "XRKL"]
         # follow_up_vars = ["P01BMI"]
-        follow_up_vars = []
 
         all_vars_to_prefix = base_vars + common_vars + pain_vars
-        all_vars_to_prefix = [visit + var for var in all_vars_to_prefix]
-        all_vars = follow_up_vars + all_vars_to_prefix
+        all_vars = [visit + var for var in all_vars_to_prefix]
 
         # Only include variables that exist in the DataFrame
         existing_vars = [var for var in all_vars if var in available_columns]
