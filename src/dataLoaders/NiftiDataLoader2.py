@@ -22,9 +22,11 @@ class NiftiDataLoader:
             batch_size=2,
             cache_rate=0.5,
             replace_rate=0.2,
-            meta_data_loader = PatientDataProcessor,
+            meta_data_loader: PatientDataProcessor = None,
             spatial_resize: Tuple[int, int, int] | Tuple[int, int] = (128, 128, 128),
             custom_transforms: Optional[List[MapTransform]] = None,  # Allow passing custom transforms,
+            transforms: Optional[List[MapTransform]] = None,
+            data_list: List[Dict[str, any]] = None
         ):
             self.data_dir = data_dir
             self.test_size = test_size
@@ -33,8 +35,10 @@ class NiftiDataLoader:
             self.cache_rate = cache_rate
             self.meta_data_loader = meta_data_loader
             self.custom_transforms = custom_transforms
+            self.transforms = transforms
             self.spatial_size = spatial_resize
             self.replace_rate = replace_rate
+            self.data_list = data_list
 
             self.val_loader: DataLoader = None
             self.train_loader: DataLoader = None
@@ -61,7 +65,7 @@ class NiftiDataLoader:
         if (isinstance(self.train_ds, SmartCacheDataset)):
             self.train_ds.shutdown()
     
-    def load_data(self, visit_nos: List[int] = None, subset_size: int = None, cache: str = "persistent"):
+    def load_data(self, subset_size: int = None, cache: str = "persistent"):
 
         isLoaded = self.load_data_list()
         print(f"Data list loaded: {isLoaded}")
@@ -73,7 +77,7 @@ class NiftiDataLoader:
         self.create_data_list()
 
         self.train_data, self.val_data, self.test_data = self.split_data()
-        self.transforms = self.get_transforms()
+        self.transforms = self.transforms if self.transforms is not None else self.get_transforms()
 
         subset_size = subset_size if subset_size is not None else len(self.data_list)
 
@@ -131,6 +135,13 @@ class NiftiDataLoader:
         return os.path.join(self.data_dir, f"{row.name}-{side}-{visit}.nii.gz")
 
     def create_data_list(self, visit_no: int = None):
+
+        if self.data_list is not None:
+            return self.data_list
+        
+        if self.meta_data_loader is None:
+            raise ValueError("Meta data loader must be provided if no data list is provided.")
+
         left = "Left"
         right = "Right"
         data_list: List[Dict[str, any]] = []
@@ -140,15 +151,15 @@ class NiftiDataLoader:
             return self.data_list
 
         if visit_no is None:
-            visits = self.meta_data_loader.data.keys()
+            visits = self.meta_data_loader.get_visits()
             print(f"Visits: {visits}")
         else:
             visits = [visit_no]
 
         for v_no in visits:
             visit: str = self.meta_data_loader.get_visit(v_no)
-            print(f"Length of data: {len(self.meta_data_loader.get_data())}")
-            for _, row in self.meta_data_loader.get_data().iterrows():
+            # print(f"Length of data: {len(self.meta_data_loader.get_loaded_data())}")
+            for _, row in self.meta_data_loader.get_loaded_data().iterrows():
                 image_path_right = self.get_image_path(row, right, visit)
                 image_path_left = self.get_image_path(row, left, visit)
 
@@ -187,9 +198,6 @@ class NiftiDataLoader:
         train_data, val_data = train_test_split(
             train_val_data, test_size=self.val_size / (1 - self.test_size), random_state=42)
         
-        print(f"Example train data: {train_data[0]}")
-        print(f"Example validation data: {val_data[0]}")
-        print(f"Example test data: {test_data[0]}")
         return train_data, val_data, test_data
     
 
