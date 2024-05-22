@@ -41,7 +41,7 @@ class SliceAggregateTransform(MapTransform):
         sagittal_slice = img_data[depth // 2, :, :]
 
         # Stack each slice into a single 3-channel image
-        combined_image = np.stack(( coronal_slice, sagittal_slice), axis=0)
+        combined_image = np.stack(( coronal_slice, sagittal_slice, axial_slice), axis=0)
 
         #combined_image = np.stack((coronal_slice), axis=0)
 
@@ -64,17 +64,21 @@ class SliceAggregateTransform(MapTransform):
             raise ValueError(f"Image data is too small to slice: {img_data.shape}")
 
         # Slicing from different directions
-        axial_slices = [img_data[:, :, width//2 - 1], 
-                        img_data[:, :, width//2], 
-                        img_data[:, :, width//2 + 1]]
 
-        coronal_slices = [img_data[:, height//2 - 2, :], 
+        axial_deviation = int(0.05 * width)
+        axial_slices = [img_data[:, :, width // 2 - axial_deviation], 
+                        img_data[:, :, width // 2], 
+                        img_data[:, :, width // 2 + axial_deviation]]
+
+        coronal_deviation = int(0.05 * height)
+        coronal_slices = [img_data[:, height//2 - coronal_deviation, :], 
                           img_data[:, height//2, :], 
-                          img_data[:, height//2 + 2, :]]
+                          img_data[:, height//2 + coronal_deviation, :]]
 
-        sagittal_slices = [img_data[depth//2 - 2, :, :], 
+        sagital_deviation = int(0.05 * depth)
+        sagittal_slices = [img_data[depth//2 - sagital_deviation, :, :], 
                            img_data[depth//2, :, :], 
-                           img_data[depth//2 + 2, :, :]]
+                           img_data[depth//2 + sagital_deviation, :, :]]
 
         # Stack each set of slices into separate channels
         axial_image = np.stack(axial_slices, axis=0)
@@ -83,5 +87,5 @@ class SliceAggregateTransform(MapTransform):
 
         # Combine the three directional images into a single multichannel image
         # combined = np.array([axial_image, coronal_image, sagittal_image])
-        combined = np.concatenate((coronal_image, sagittal_image), axis=0)
+        combined = np.concatenate((coronal_image, sagittal_image, axial_image), axis=0)
         return combined
