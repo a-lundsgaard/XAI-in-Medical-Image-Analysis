@@ -53,118 +53,65 @@ class PatientDataProcessor:
     def __init__(
         self,
         base_path: str = "/Users/askelundsgaard/Documents/datalogi/6-semester/Bachelor/XAI-in-Medical-Image-Analysis/datasets/meta_data/OAIdata21/",
-        labels = ["BLFPD", "ALTPD", "IBMFPD"]
     ):
         self.base_path = base_path
-        self.data: dict[str, pd.DataFrame] = {}
+        self.data: pd.DataFrame = {}
         # This will store the enrollment data including sex
         self.enroll_df: pd.DataFrame = {}
         self.subjects = np.loadtxt(base_path + "SubjectChar00.txt",
                                    delimiter='|', skiprows=1, usecols=(0,), dtype=int)
         self.visit: str = None
         self.visits: Dict[int, str] = {}
+        self.labels = []
+
+    def get_loaded_data(self):
+        return self.data
+
+    def load_all_clinical_data(self, labels = ["WOMKP"]):
         self.labels = labels
-
-        self.metricDict = {
-            "BMI": "BMI",
-            "AGE": "AGE",
-            "WOMTSL": "WOMTSL",
-            "WOMTSR": "WOMTSR",
-            "KQOL2": "KQOL2",
-            "PASE": "PASE",
-            "DILKN10": "DILKN10",
-            "DILKN11": "DILKN11",
-            "DILKN2": "DILKN2",
-            "DIRKN10": "DIRKN10",
-            "DIRKN11": "DIRKN11",
-            "DIRKN2": "DIRKN2"
-        }
-
-
-    def get_data(self, visit_no: int = None):
-
-        if visit_no and visit_no in self.data:
-            return self.data[visit_no]
-        """Combine and display all collected data."""
-
-        # print(f"Total number of subjects: {self.data}")
-        combined_data: pd.DataFrame = pd.concat(self.data.values(), axis=1)
-        # replace V0* from the column names
-        # combined_data.columns = [col[0:3] + "_" + col[3:]
-        #                          for col in combined_data.columns]
-        # print(f"Total length of the dataframe: {len(combined_data)}")
-        return combined_data
-    
-    def get_all_clinical_data(self):
         all_data = pd.DataFrame()
         for visit_no in range(0, 12):
-            all_data = pd.concat([all_data, self.get_clinical_data(visit_no)], axis=1)
+            all_data = pd.concat([all_data, self.get_clinical_data(visit_no, labels=labels)], axis=1)
+        self.data = all_data
         return all_data    
     
-    def get_clinical_data(self, visit_no: int):
+    def get_clinical_data(self, visit_no: int, labels = ["WOMKP"]):
         visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
         self.visit = visit
         self.visits[visit_no] = visit
         df_visit = self.load_data(f"AllClinical{visit[1:]}.txt")
         if df_visit.empty:
             return
+        
+        self.add_visit(visit_no)
 
         df_visit = df_visit[df_visit.index.isin(self.subjects)]
-        variables_of_interest = self.define_variables_of_interest(
-            visit, df_visit.columns)
+        variables_of_interest = self.get_clinical_variables(visit, df_visit.columns, left_right_vars=labels)
         df_visit = df_visit[variables_of_interest]
 
-        self.clean_data(df_visit)
-        self.get_enrollment_data()
-        # print(f"Enrollment data: {self.enroll_df}")
-        self.fill_missing_with_mean(df_visit, variables_of_interest)
-        return df_visit
-    
-
-    def create_meta_data_for_visit(self, visit_no: int):
-        visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
-        # self.visit = visit
-        # self.visits[visit_no] = visit
-        # df_visit = self.load_data(f"AllClinical{visit[1:]}.txt")
-        # if df_visit.empty:
-        #     return
-
-        # df_visit = df_visit[df_visit.index.isin(self.subjects)]
-        # variables_of_interest = self.define_variables_of_interest(
-        #     visit, df_visit.columns)
-        # df_visit = df_visit[variables_of_interest]
-
         # self.clean_data(df_visit)
-        # self.get_enrollment_data()
-        # # print(f"Enrollment data: {self.enroll_df}")
+        df_visit = self.get_enrollment_data(df_visit)
+        # print(f"Enrollment data: {self.enroll_df}")
         # self.fill_missing_with_mean(df_visit, variables_of_interest)
+        return df_visit
 
-        # df_visit = df_visit.merge(
-        #     self.enroll_df, left_index=True, right_index=True, how='left')
+
+    # def get_visit(self, visit_no: int = None):
+    #     if visit_no in self.data:
+    #         visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
+    #         return visit
+    #     else : 
+    #         raise ValueError(f"Visit {visit_no} not created. Please create the visit")
         
-        # kmri_data = self.load_kMRI_data(visit_no)
-        # if kmri_data is not None:
-        #     df_visit = df_visit.merge(
-        #         kmri_data, left_index=True, right_index=True)
-        
-        # self.data[visit_no] = df_visit
-        self.data[visit_no] = self.load_kMRI_data(visit_no, labels = self.labels)
-        # print length of the dataframe
-        print(f"Length of the dataframe: {len(self.data[visit_no])}")
-        # self.get_kellberg_lawrence_grade(visit_no)
-        # self.load_kMRI_data(visit_no)
-
-        return self.data
-
 
     def get_visit(self, visit_no: int = None):
-        if visit_no in self.data:
-            visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
-            return visit
-        else : 
-            raise ValueError(f"Visit {visit_no} not created. Please create the visit")
+        return self.visits[visit_no]
+
+            # visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
+            # return visit
     
-    def get_enrollment_data(self):
+    
+    def get_enrollment_data(self, df: pd.DataFrame):
         # Load the enrollment data
         enroll = self.base_path + "Enrollees.txt"
         df_enroll = pd.read_csv(enroll, sep="|", index_col="ID")
@@ -172,56 +119,25 @@ class PatientDataProcessor:
         self.enroll_df = df_enroll[['P02SEX']].replace(
             {'1: Male': 0, '2: Female': 1}).infer_objects(copy=False)
         self.enroll_df.rename(columns={'P02SEX': 'Sex'}, inplace=True)
-
-
-    # def load_kMRI_data(self, visit_no: int):
-    #     visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
-    #     print(f"Loading kMRI data for visit {visit}")
-    #     df = self.load_data(f"kMRI_QCart_Eckstein{visit[1:]}.txt")
-    #     if df.empty:
-    #         return
-    #     df = df[df.index.isin(self.subjects)]
-
-    #     # print(f"Loaded kMRI data for visit {df}")
-
-    #     variables = ["BLFPD", "ALTPD", "IBMFPD"]
-    #     for var in variables:
-    #         right_var = f"{visit}{var}R"
-    #         left_var = f"{visit}{var}L"
-    #         df[right_var] = df.apply(lambda row: row[f"{visit}{var}"] if row['SIDE'] == '1: Right' else np.nan, axis=1)
-    #         df[left_var] = df.apply(lambda row: row[f"{visit}{var}"] if row['SIDE'] == '2: Left' else np.nan, axis=1)
-
-    #     variables_with_suffix = [f"{visit}{var}R" for var in variables] + [f"{visit}{var}L" for var in variables]
-    #     df = df[variables_with_suffix]
-
-    #     return df
+        # Merge the enrollment data with the clinical data
+        merged = df.merge(self.enroll_df, left_index=True, right_index=True, how='left')
+        return merged
     
-    # def load_kMRI_data(self, visit_no: int):
-    #     visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
-    #     print(f"Loading kMRI data for visit {visit}")
-    #     # df = self.load_data(f"kMRI_QCart_Eckstein{visit[1:]}.txt", index_col="ID")
-    #     name = f"kMRI_QCart_Eckstein{visit[1:]}.txt"
-    #     path = f"{self.base_path}/{name}"
+    def get_visits(self):
+        return self.visits.keys()
 
-    #     df = pd.read_csv(path, sep="|", header=0)
-    #     if df.empty:
-    #         print(f"No data found for visit {visit}")
-    #         return
-    #     # df = df[df.index.isin(self.subjects)]
-    #     # if df.empty:
-    #     #     print(f"No matching subjects found for visit {visit}")
-    #     #     return
-        
-    #     return df
+    def load_all_kMRI_data(self, labels = ["BLFPD", "ALTPD", "IBMFPD"]):
+        df = pd.DataFrame()
+        for visit_no in range(0, 12):
+            df = pd.concat([df, self.load_kMRI_data(visit_no, labels=labels)], axis=1)
+        self.data = df
+        return df
     
-    def load_all_kMRI_data(self, labels: list[str] = ["BLFPD", "ALTPD", "IBMFPD"]):
-        all_data = pd.DataFrame()
-        for i in range(0, 12):
-            all_data =pd.concat([all_data, self.load_kMRI_data(i, labels)], axis=1)
-
-        return all_data
-
-    def load_kMRI_data(self, visit_no: int, labels: list[str] = ["BLFPD", "ALTPD", "IBMFPD"]):
+    def add_visit(self, visit_no: int):
+        visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
+        self.visits[visit_no] = visit
+    
+    def load_kMRI_data(self, visit_no: int, labels = ["BLFPD", "ALTPD", "IBMFPD"]):
         visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
         print(f"Loading kMRI data for visit {visit}")
         name = f"kMRI_QCart_Eckstein{visit[1:]}.txt"
@@ -236,9 +152,10 @@ class PatientDataProcessor:
             print("No file found at: ", path, "skipping.")
             return pd.DataFrame() 
         
+        self.add_visit(visit_no)
+        
         # Variables of interest
-        variables = labels
-        variables_with_prefix = [f"{visit}{var}" for var in variables]
+        variables_with_prefix = [f"{visit}{var}" for var in labels]
 
         # Filter the dataframe to only include the variables of interest
         variables_with_side = ['ID', 'SIDE'] + variables_with_prefix
@@ -246,7 +163,7 @@ class PatientDataProcessor:
 
         # if emtpy return the dataframe
         if df.empty:
-            print(f"Labels: {self.labels} not+ found for visit {visit}")
+            print(f"Labels: {labels} not+ found for visit {visit}")
             return df
 
         df['SIDE'] = df['SIDE'].astype(str)
@@ -264,7 +181,6 @@ class PatientDataProcessor:
         df_combined.index.name = 'ID'
         print(f"Length of the dataframe: {len(df_combined)}")
         return df_combined
-
 
 
     def get_kellberg_lawrence_grade(self, visit_no: int):
@@ -285,7 +201,6 @@ class PatientDataProcessor:
             df, left_index=True, right_index=True, how='left')
         return self.data
 
-
     def load_data(self, file_name: str, index_col: str = "ID") -> pd.DataFrame:
         """Load data from a given file within the base path, handling pipe-delimited format."""
         path = f"{self.base_path}/{file_name}"
@@ -294,14 +209,6 @@ class PatientDataProcessor:
         except Exception as e:
             print(f"Error loading data from {path}: {e}")
             return pd.DataFrame()
-        
-    def load_all_visits(self):
-        for visit_no in range(0, 12):  # Assuming there are 10 visits
-            self.create_meta_data_for_visit(visit_no)
-
-    def load_specific_visits(self, visit_nos: list[int]):
-        for visit_no in visit_nos:
-            self.create_meta_data_for_visit(visit_no)
 
     def fill_missing_with_mean(self, dataframe: pd.DataFrame, variables_of_interest: list[str]):
         """Fill missing variables with the mean of available data."""
@@ -310,21 +217,14 @@ class PatientDataProcessor:
                 mean = dataframe[column].mean().__round__(1)
                 dataframe[column].fillna(mean, inplace=True)
 
-    def define_variables_of_interest(self, visit: str, available_columns: pd.Index) -> list:
+    def get_clinical_variables(self, visit: str, available_columns: pd.Index, left_right_vars=[], base_vars = ["AGE"]) -> list:
         """Dynamically define variables of interest based on the visit code and check if they exist in the DataFrame."""
         # base_vars = ["BMI", "AGE"]
-        base_vars = ["AGE"]
-
-        # common_vars = ["WOMTSL", "WOMTSR", "KQOL2", "PASE"]
-        common_vars = []
         # pain_vars = ["DILKN10", "DILKN11", "DILKN2",
         #              "DIRKN10", "DIRKN11", "DIRKN2", "WOMKPL", "WOMKPR", "XRKL"]
-        pain_vars = ["WOMKPL", "WOMKPR", "XRKL"]
-        # follow_up_vars = ["P01BMI"]
-
-        all_vars_to_prefix = base_vars + common_vars + pain_vars
+        suffix_vars = [var + "L" for var in left_right_vars] + [var + "R" for var in left_right_vars]
+        all_vars_to_prefix = base_vars + suffix_vars
         all_vars = [visit + var for var in all_vars_to_prefix]
-
         # Only include variables that exist in the DataFrame
         existing_vars = [var for var in all_vars if var in available_columns]
         missing_cols = set(all_vars) - set(existing_vars)
@@ -337,8 +237,7 @@ class PatientDataProcessor:
         """Convert categorical data and handle missing values."""
         for column in dataframe.columns:
             if dataframe[column].dtype == 'object':
-                dataframe[column] = self.convert_categorical_to_numeric(
-                    dataframe[column])
+                dataframe[column] = self.convert_categorical_to_numeric(dataframe[column])
 
     def convert_categorical_to_numeric(self, series: pd.Series) -> pd.Series:
         """Convert categorical series to numeric by extracting numeric codes if formatted as 'number: description'."""
