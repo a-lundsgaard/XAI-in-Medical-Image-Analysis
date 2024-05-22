@@ -10,6 +10,7 @@ from src.dataLoaders.PatientDataLoader import PatientDataProcessor
 from monai.transforms import MapTransform
 from typing import Optional, List, Any, Tuple
 import pickle
+from src.dataLoaders.utils.BalancedDataLoader import BalancedBatchSampler
 
 
 
@@ -86,50 +87,50 @@ class NiftiDataLoader:
 
         if subset_size is not None:
             train_indices = np.random.permutation(len(self.train_data))[:subset_size]
-            print(f"Train indices: {train_indices}")
+            self.train_data = [self.train_data[i] for i in train_indices]
+            # print(f"Train indices: {train_indices}")
             val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size)]
-            print(f"Val indices: {val_indices}")
+            self.val_data = [self.val_data[i] for i in val_indices]
+            # print(f"Val indices: {val_indices}")
             test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size)]
-            print(f"Test indices: {test_indices}")
+            self.test_data = [self.test_data[i] for i in test_indices]
+            # print(f"Test indices: {test_indices}")
 
             if cache == "smart":
-                self.train_ds = self.create_smart_cache_dataset(self.train_data, train_indices, cache_rate=self.cache_rate, replace_rate=self.replace_rate)
-                self.val_ds = self.create_cache_dataset(self.val_data, val_indices)
-                self.test_ds = self.create_cache_dataset(self.test_data, test_indices)
+                self.train_ds = self.create_smart_cache_dataset(self.train_data, cache_rate=self.cache_rate, replace_rate=self.replace_rate)
+                self.val_ds = self.create_cache_dataset(self.val_data)
+                self.test_ds = self.create_cache_dataset(self.test_data)
             elif cache == "persistent":
-                self.train_ds = self.create_persistent_cache_dataset(self.train_data, train_indices, "train")
-                self.val_ds = self.create_persistent_cache_dataset(self.val_data, val_indices, "val")
-                self.test_ds = self.create_persistent_cache_dataset(self.test_data, test_indices, "test")
+                self.train_ds = self.create_persistent_cache_dataset(self.train_data, "train")
+                self.val_ds = self.create_persistent_cache_dataset(self.val_data, "val")
+                self.test_ds = self.create_persistent_cache_dataset(self.test_data, "test")
             elif cache == "standard":
-                self.train_ds = self.create_cache_dataset(self.train_data, train_indices)
-                self.val_ds = self.create_cache_dataset(self.val_data, val_indices)
-                self.test_ds = self.create_cache_dataset(self.test_data, test_indices)
+                self.train_ds = self.create_cache_dataset(self.train_data)
+                self.val_ds = self.create_cache_dataset(self.val_data)
+                self.test_ds = self.create_cache_dataset(self.test_data)
             else:
-                self.train_ds = Dataset(data=[self.train_data[i] for i in train_indices], transform=self.transforms)
-                self.val_ds = Dataset(data=[self.val_data[i] for i in val_indices], transform=self.transforms)
-                self.test_ds = Dataset(data=[self.test_data[i] for i in test_indices], transform=self.transforms)
+                self.train_ds = Dataset(self.train_data, transform=self.transforms)
+                self.val_ds = Dataset(data=self.val_data, transform=self.transforms)
+                self.test_ds = Dataset(data=self.test_data, transform=self.transforms)
         else:
             raise ValueError("Subset size must be provided")
         self.get_dataloaders()
 
-    def create_smart_cache_dataset(self, data, indices, cache_rate= 0.5, replace_rate=0.2):
-        subset_data = [data[i] for i in indices]
+    def create_smart_cache_dataset(self, data, cache_rate= 0.5, replace_rate=0.2):
         # print length of subset data
-        print(f"Subset data length: {len(subset_data)}")
-        cache_num = int(len(subset_data) * cache_rate)
+        print(f"Subset data length: {len(data)}")
+        cache_num = int(len(data) * cache_rate)
         print(f"Cache num: {cache_num}")
-        return SmartCacheDataset(data=subset_data, num_init_workers=self.available_workers, transform=self.transforms, cache_num=cache_num, replace_rate=replace_rate, num_replace_workers=self.available_workers)
+        return SmartCacheDataset(data=data, num_init_workers=self.available_workers, transform=self.transforms, cache_num=cache_num, replace_rate=replace_rate, num_replace_workers=self.available_workers)
     
-    def create_cache_dataset(self, data, indices):
-        subset_data = [data[i] for i in indices]
-        return CacheDataset(data=subset_data, transform=self.transforms, num_workers=self.available_workers)
+    def create_cache_dataset(self, data):
+        return CacheDataset(data=data, transform=self.transforms, num_workers=self.available_workers)
     
-    def create_persistent_cache_dataset(self, data, indices, data_prefix: str):
-        subset_data = [data[i] for i in indices]
-        cache_num = int(len(subset_data))
+    def create_persistent_cache_dataset(self, data, data_prefix: str):
+        cache_num = int(len(data))
         print(f"Cache num: {cache_num}")
         path = os.path.join(self.file_path, "cache", data_prefix)
-        return PersistentDataset(data=subset_data, transform=self.transforms, cache_dir=path) 
+        return PersistentDataset(data=data, transform=self.transforms, cache_dir=path) 
 
     def get_image_path(self, row: pd.Series, side: str, visit: str):
         return os.path.join(self.data_dir, f"{row.name}-{side}-{visit}.nii.gz")
@@ -243,9 +244,19 @@ class NiftiDataLoader:
     
     
     def get_dataloaders(self):
-        # self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, use_thread_workers=True, num_workers=self.available_workers)
-        # self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
-        # self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
-        self.train_loader = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, num_workers=self.available_workers)
-        self.val_loader = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, num_workers=self.available_workers)
-        self.test_loader = DataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, num_workers=self.available_workers)
+
+        train_labels = [item['label'] for item in self.train_data]
+
+        var_to_balance = "WOMKP"  # Example variable to balance
+        print(f"batch_size: {self.batch_size}")
+        train_sampler = BalancedBatchSampler(self.train_data, train_labels, self.batch_size, var_to_balance)
+
+        # self.train_loader = DataLoader(self.train_ds, shuffle=False, num_workers=self.available_workers, batch_sampler=train_sampler)
+
+        self.train_loader = ThreadDataLoader(self.train_ds, shuffle=False, use_thread_workers=True, num_workers=self.available_workers, batch_sampler=train_sampler)
+        self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
+        self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
+        
+        # self.train_loader = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
+        # self.val_loader = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
+        # self.test_loader = DataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False)
