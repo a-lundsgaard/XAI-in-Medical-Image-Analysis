@@ -10,6 +10,7 @@ from src.dataLoaders.PatientDataLoader import PatientDataProcessor
 from monai.transforms import MapTransform
 from typing import Optional, List, Any, Tuple
 import pickle
+from src.dataLoaders.utils.BalancedDataLoader import BalancedBatchSampler
 
 
 
@@ -86,11 +87,11 @@ class NiftiDataLoader:
 
         if subset_size is not None:
             train_indices = np.random.permutation(len(self.train_data))[:subset_size]
-            print(f"Train indices: {train_indices}")
+            # print(f"Train indices: {train_indices}")
             val_indices = np.random.permutation(len(self.val_data))[:int(subset_size*self.val_size)]
-            print(f"Val indices: {val_indices}")
+            # print(f"Val indices: {val_indices}")
             test_indices = np.random.permutation(len(self.test_data))[:int(subset_size*self.test_size)]
-            print(f"Test indices: {test_indices}")
+            # print(f"Test indices: {test_indices}")
 
             if cache == "smart":
                 self.train_ds = self.create_smart_cache_dataset(self.train_data, train_indices, cache_rate=self.cache_rate, replace_rate=self.replace_rate)
@@ -181,11 +182,11 @@ class NiftiDataLoader:
                 # Check if all labels are not NaN
                 if all_right==True and os.path.exists(image_path_right):
                     data_list.append({'image': image_path_right, 'label': labels_right_knee})
-                    print(f"Labels right knee: {labels_right_knee}")
+                    # print(f"Labels right knee: {labels_right_knee}")
                 
                 if all_left==True and os.path.exists(image_path_left):
                     data_list.append({'image': image_path_left, 'label': labels_left_knee})
-                    print(f"Labels left knee: {labels_left_knee}")
+                    # print(f"Labels left knee: {labels_left_knee}")
 
         self.data_list = data_list
         # self.save_data_list()
@@ -243,9 +244,17 @@ class NiftiDataLoader:
     
     
     def get_dataloaders(self):
-        self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, use_thread_workers=True, num_workers=self.available_workers)
+
+        train_labels = [item['label'] for item in self.train_data]
+
+        var_to_balance = "WOMKP"  # Example variable to balance
+        print(f"batch_size: {self.batch_size}")
+        train_sampler = BalancedBatchSampler(self.train_data, train_labels, self.batch_size, var_to_balance)
+
+        self.train_loader = DataLoader(self.train_ds, shuffle=False, num_workers=self.available_workers, batch_sampler=train_sampler)
         self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
         self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
+        
         # self.train_loader = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
         # self.val_loader = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
         # self.test_loader = DataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False)
