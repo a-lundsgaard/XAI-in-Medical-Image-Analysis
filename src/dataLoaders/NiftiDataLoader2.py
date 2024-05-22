@@ -251,7 +251,9 @@ class NiftiDataLoader:
         print(f"batch_size: {self.batch_size}")
         train_sampler = BalancedBatchSampler(self.train_data, train_labels, self.batch_size, var_to_balance)
 
-        self.train_loader = DataLoader(self.train_ds, shuffle=False, num_workers=self.available_workers, batch_sampler=train_sampler)
+        # self.train_loader = DataLoader(self.train_ds, shuffle=False, num_workers=self.available_workers, batch_sampler=train_sampler)
+
+        self.train_loader = ThreadDataLoader(self.train_ds, shuffle=False, use_thread_workers=True, num_workers=self.available_workers, batch_sampler=train_sampler)
         self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
         self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
         
