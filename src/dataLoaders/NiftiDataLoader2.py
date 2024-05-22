@@ -181,11 +181,11 @@ class NiftiDataLoader:
                 # Check if all labels are not NaN
                 if all_right==True and os.path.exists(image_path_right):
                     data_list.append({'image': image_path_right, 'label': labels_right_knee})
-                    print(f"Labels right knee: {labels_right_knee}")
+                    # print(f"Labels right knee: {labels_right_knee}")
                 
                 if all_left==True and os.path.exists(image_path_left):
                     data_list.append({'image': image_path_left, 'label': labels_left_knee})
-                    print(f"Labels left knee: {labels_left_knee}")
+                    # print(f"Labels left knee: {labels_left_knee}")
 
         self.data_list = data_list
         # self.save_data_list()
@@ -243,9 +243,9 @@ class NiftiDataLoader:
     
     
     def get_dataloaders(self):
-        self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, use_thread_workers=True, num_workers=self.available_workers)
-        self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
-        self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
-        # self.train_loader = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
-        # self.val_loader = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False)
-        # self.test_loader = DataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False)
+        # self.train_loader = ThreadDataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, use_thread_workers=True, num_workers=self.available_workers)
+        # self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
+        # self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
+        self.train_loader = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, num_workers=self.available_workers)
+        self.val_loader = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, num_workers=self.available_workers)
+        self.test_loader = DataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, num_workers=self.available_workers)
