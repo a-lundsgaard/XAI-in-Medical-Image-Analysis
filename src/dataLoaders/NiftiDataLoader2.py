@@ -81,7 +81,7 @@ class NiftiDataLoader:
         self.create_data_list()
 
         self.train_data, self.val_data, self.test_data = self.split_data()
-        self.transforms = self.transforms if self.transforms is not None else self.get_transforms()
+        self.transforms = Compose(self.transforms) if self.transforms is not None else self.get_transforms()
 
         subset_size = subset_size if subset_size is not None else len(self.data_list)
 
@@ -214,10 +214,10 @@ class NiftiDataLoader:
 
         base_transforms = [
             LoadImaged(keys=["image"], ensure_channel_first=True),
-            # Lambdad(keys=["image"], func=lambda x: x.half()),  # Convert to float16
+            Lambdad(keys=["image"], func=lambda x: x.half()),  # Convert to float16
             ResizeD(keys=["image"], spatial_size=self.spatial_size),
             ScaleIntensityd(keys=["image"]),
-            # NormalizeIntensityD(keys=["image"], nonzero=True, channel_wise=True),
+            NormalizeIntensityD(keys=["image"], nonzero=True, channel_wise=True),
         ]
 
         if self.custom_transforms:

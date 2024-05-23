@@ -19,7 +19,7 @@ class MedicalResNetModel:
                  pretrained_weights_path=None
                  ):
 
-        self.spacial_dims = spatial_dims
+        self.spatial_dims = spatial_dims
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
@@ -31,7 +31,7 @@ class MedicalResNetModel:
                 images = batch_data["image"]
                 break
             print("Image spatial dimensions: ", len(images.shape) - 2)
-            self.spacial_dims = len(images.shape) - 2
+            self.spatial_dims = len(images.shape) - 2
 
         # set the n_input_channels based on the number of channels in the first image
         n_input_channels = images.shape[1]
@@ -62,7 +62,7 @@ class MedicalResNetModel:
 
         # Define the model
         self.model: ResNet = resnet(
-            spatial_dims=self.spacial_dims,
+            spatial_dims=self.spatial_dims,
             n_input_channels=n_input_channels,
             # dropout_rate=dropout_rate,
         )

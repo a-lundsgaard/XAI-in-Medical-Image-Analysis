@@ -20,9 +20,14 @@ class MonaiMedicalResNet(MedicalResNetModelBase):
             raise ValueError(
                 "Unsupported depth for ResNet. Choose from 18, 34, 50.")
         
-        print("Spatial dims: ", self.spacial_dims)
+        print("Spatial dims: ", self.spatial_dims)
         self.model: ResNet = resnet(
-            spatial_dims=self.spacial_dims,
+            spatial_dims=self.spatial_dims,
             n_input_channels=self.n_input_channels,
         )
+
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        else:
+            self.device = torch.device("cpu")
         
