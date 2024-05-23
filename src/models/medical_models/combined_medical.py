@@ -6,7 +6,7 @@ from src.dataLoaders.NiftiDataLoader2 import NiftiDataLoader
 from src.models.medical_models.base_medical import MedicalResNetModelBase
 
 class CombinedResNetModel(nn.Module):
-    def __init__(self, n_input_channels=1, resnet_depth=18, num_labels=1, pretrained=True):
+    def __init__(self, n_input_channels=1, resnet_depth=18, num_labels=1, pretrained=True, only_center_slice=False):
         super(CombinedResNetModel, self).__init__()
         
         # Initialize ResNet models for each view
@@ -15,6 +15,7 @@ class CombinedResNetModel(nn.Module):
         self.resnet_sagittal = self._initialize_resnet(resnet_depth, n_input_channels, pretrained)
         self.resnet_depth = resnet_depth
         self.n_input_channels = n_input_channels
+        self.only_center_slice = only_center_slice
         
         # Feature extractor layers
         self.axial_features = nn.Sequential(*list(self.resnet_axial.children())[:-1])
@@ -48,10 +49,17 @@ class CombinedResNetModel(nn.Module):
         return model
 
     def forward(self, x):
-        
-        axial_input = x[:, :self.n_input_channels, :, :]
-        coronal_input = x[:, self.n_input_channels:2*self.n_input_channels, :, :]
-        sagittal_input = x[:, 2*self.n_input_channels:, :, :]
+
+        if self.only_center_slice and self.n_input_channels == 3:
+            # Extract only the center slice for each view
+            print("Extracting only the center slice for each view")
+            axial_input = x[:, self.n_input_channels-1:self.n_input_channels, :, :]
+            coronal_input = x[:, 2*self.n_input_channels-1:2*self.n_input_channels, :, :]
+            sagittal_input = x[:, 3*self.n_input_channels-1:3*self.n_input_channels, :, :]
+        else:
+            axial_input = x[:, :self.n_input_channels, :, :]
+            coronal_input = x[:, self.n_input_channels:2*self.n_input_channels, :, :]
+            sagittal_input = x[:, 2*self.n_input_channels:, :, :]
         
         # Extract features from each view
         axial_features = self.axial_features(axial_input).view(x.size(0), -1)
