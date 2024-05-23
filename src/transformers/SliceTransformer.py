@@ -41,7 +41,7 @@ class SliceAggregateTransform(MapTransform):
         sagittal_slice = img_data[depth // 2, :, :]
 
         # Stack each slice into a single 3-channel image
-        combined_image = np.stack(( coronal_slice, sagittal_slice, axial_slice), axis=0)
+        combined_image = np.stack(( coronal_slice, sagittal_slice), axis=0)
 
         #combined_image = np.stack((coronal_slice), axis=0)
 

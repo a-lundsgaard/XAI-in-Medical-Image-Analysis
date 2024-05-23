@@ -43,7 +43,7 @@ class BalancedBatchSampler(Sampler):
         # Generate balanced batches
         batch = []
         class_counts = {label: 0 for label in self.target_distribution.keys()}
-        print(f"Class counts: {class_counts}")
+        # print(f"Class counts: {class_counts}")
         batches_created = 0
 
         used_indices = set()
