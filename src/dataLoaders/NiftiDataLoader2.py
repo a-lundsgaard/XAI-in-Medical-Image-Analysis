@@ -214,16 +214,19 @@ class NiftiDataLoader:
 
         base_transforms = [
             LoadImaged(keys=["image"], ensure_channel_first=True),
-            Lambdad(keys=["image"], func=lambda x: x.half()),  # Convert to float16
+            # Lambdad(keys=["image"], func=lambda x: x.half()),  # Convert to float16
             ResizeD(keys=["image"], spatial_size=self.spatial_size),
-            ScaleIntensityd(keys=["image"]),
-            NormalizeIntensityD(keys=["image"], nonzero=True, channel_wise=True),
         ]
 
         if self.custom_transforms:
             base_transforms.extend(self.custom_transforms)
 
-        base_transforms.append(ToTensord(keys=["image"])) # TODO Add label to keys
+        base_transforms.extend([
+            ScaleIntensityd(keys=["image"], minv=0.0, maxv=1.0, factor=1.0),
+            NormalizeIntensityD(keys=["image"], nonzero=True, channel_wise=True),
+            ToTensord(keys=["image"])
+        ])
+
         return Compose(base_transforms)
     
     def save_data_list(self):
