@@ -104,7 +104,15 @@ class MedicalResNetModelBase(ABC):
                     new_state_dict[k] = v
 
             print("State dict key adjustment", new_state_dict.keys())
-            self.model.load_state_dict(new_state_dict)
+
+            model_state_dict = self.model.state_dict()
+            # Only load weights that match the model's state dictionary keys
+            matched_state_dict = {k: v for k, v in new_state_dict.items() if k in model_state_dict}
+            print("Keys to be loaded into model:", matched_state_dict.keys())
+
+            # Load the matched weights into the model
+            model_state_dict.update(matched_state_dict)
+            self.model.load_state_dict(model_state_dict)
 
     @abstractmethod
     def set_model(self):

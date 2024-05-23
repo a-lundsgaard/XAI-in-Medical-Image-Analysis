@@ -81,7 +81,7 @@ class NiftiDataLoader:
         self.create_data_list()
 
         self.train_data, self.val_data, self.test_data = self.split_data()
-        self.transforms = self.transforms if self.transforms is not None else self.get_transforms()
+        self.transforms = Compose(self.transforms) if self.transforms is not None else self.get_transforms()
 
         subset_size = subset_size if subset_size is not None else len(self.data_list)
 
