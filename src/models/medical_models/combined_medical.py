@@ -14,6 +14,7 @@ class CombinedResNetModel(nn.Module):
         self.resnet_coronal = self._initialize_resnet(resnet_depth, n_input_channels, pretrained)
         self.resnet_sagittal = self._initialize_resnet(resnet_depth, n_input_channels, pretrained)
         self.resnet_depth = resnet_depth
+        self.n_input_channels = n_input_channels
         
         # Feature extractor layers
         self.axial_features = nn.Sequential(*list(self.resnet_axial.children())[:-1])
@@ -47,15 +48,10 @@ class CombinedResNetModel(nn.Module):
         return model
 
     def forward(self, x):
-        # Split the input into three parts: axial, coronal, sagittal
-        # input is of shape (batch_size, n_input_channels, height, width)
-        # get the number of input channels
-        n_input_channels = x.size(1)
         
-        # get the number of channels per view
-        axial_input = x[:, :n_input_channels, :, :]
-        coronal_input = x[:, n_input_channels:2*n_input_channels, :, :]
-        sagittal_input = x[:, 2*n_input_channels:, :, :]
+        axial_input = x[:, :self.n_input_channels, :, :]
+        coronal_input = x[:, self.n_input_channels:2*self.n_input_channels, :, :]
+        sagittal_input = x[:, 2*self.n_input_channels:, :, :]
         
         # Extract features from each view
         axial_features = self.axial_features(axial_input).view(x.size(0), -1)
@@ -81,3 +77,13 @@ class MedicalCombinedResNetModel(MedicalResNetModelBase):
             raise ValueError("Number of input channels should be divisible by 3.")
         input_channels_per_view = self.n_input_channels // 3
         self.model = CombinedResNetModel(n_input_channels=input_channels_per_view, resnet_depth=self.depth, num_labels=num_labels, pretrained=True)
+
+
+# Example of how to train this model
+# Initialize your data loader
+# data_loader = NiftiDataLoader(train_data, val_data, test_data)  # Assuming you have these datasets
+
+# # Instantiate and train the model
+# combined_model = MedicalCombinedResNetModel(num_epochs=100, data_loader=data_loader)
+# combined_model.train()
+# combined_model.evaluate()
