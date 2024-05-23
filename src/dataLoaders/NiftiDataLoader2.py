@@ -27,7 +27,8 @@ class NiftiDataLoader:
             spatial_resize: Tuple[int, int, int] | Tuple[int, int] = (128, 128, 128),
             custom_transforms: Optional[List[MapTransform]] = None,  # Allow passing custom transforms,
             transforms: Optional[List[MapTransform]] = None,
-            data_list: List[Dict[str, any]] = None
+            data_list: List[Dict[str, any]] = None,
+            custom_sampler: bool = False
         ):
             self.data_dir = data_dir
             self.test_size = test_size
@@ -40,6 +41,7 @@ class NiftiDataLoader:
             self.spatial_size = spatial_resize
             self.replace_rate = replace_rate
             self.data_list = data_list
+            self.custom_sampler = custom_sampler
 
             self.val_loader: DataLoader = None
             self.train_loader: DataLoader = None
@@ -70,6 +72,7 @@ class NiftiDataLoader:
 
         isLoaded = self.load_data_list()
         print(f"Data list loaded: {isLoaded}")
+        print(f"Using custom sampler: {self.custom_sampler}")
         # if not isLoaded:
         #     if visit_nos is None:
         #         self.meta_data_loader.load_all_visits()
@@ -249,11 +252,15 @@ class NiftiDataLoader:
 
         var_to_balance = "WOMKP"  # Example variable to balance
         print(f"batch_size: {self.batch_size}")
-        train_sampler = BalancedBatchSampler(self.train_data, train_labels, self.batch_size, var_to_balance)
 
         # self.train_loader = DataLoader(self.train_ds, shuffle=False, num_workers=self.available_workers, batch_sampler=train_sampler)
 
-        self.train_loader = ThreadDataLoader(self.train_ds, shuffle=False, use_thread_workers=True, num_workers=self.available_workers, batch_sampler=train_sampler)
+        if self.custom_sampler:
+            train_sampler = BalancedBatchSampler(self.train_data, train_labels, self.batch_size, var_to_balance)
+            self.train_loader = ThreadDataLoader(self.train_ds, shuffle=False, use_thread_workers=True, num_workers=self.available_workers, batch_sampler=train_sampler)
+        else:
+            self.train_loader = ThreadDataLoader(self.train_ds, shuffle=True,  batch_size=self.batch_size,  use_thread_workers=True, num_workers=self.available_workers)
+
         self.val_loader = ThreadDataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
         self.test_loader = ThreadDataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, use_thread_workers=True, num_workers=self.available_workers)
         
