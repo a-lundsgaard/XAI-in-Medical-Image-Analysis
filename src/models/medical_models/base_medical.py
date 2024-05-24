@@ -34,6 +34,7 @@ class MedicalResNetModelBase(ABC):
         self.spatial_dims: int = 2
         self.pretrained_weights_path = f"../src/models/weights/resnet_{self.depth}_23dataset.pth"
         self.save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_models")
+        self.image_shape = None
 
         # Check what spatial dimensions the first training image is and set the model to that
         print("Data loader train loader: ", len(self.data_loader.train_loader), len(self.data_loader.train_loader.dataset))
@@ -44,6 +45,8 @@ class MedicalResNetModelBase(ABC):
                 break
             # print("Image spatial dimensions: ", len(images.shape) - 2)
             print("Image spatial dimensions: ", images.shape)
+            self.image_shape = images.shape
+
 
             self.spatial_dims = len(images.shape) - 2
 
@@ -218,8 +221,8 @@ class MedicalResNetModelBase(ABC):
             'val_loss': val_loss,
             'r2_score': r2,
         }
-        height, width = self.data_loader.train_ds[0]["image"].shape[1:]
-        save_path = os.path.join(self.save_dir, f"{self.__class__.__name__}_{self.depth}_{len(self.data_loader.train_ds)}_height_{height}_epoch_{epoch}_val_{round(val_loss, 2)}_r2_{round(r2, 2)}.pth")
+        shape = self.image_shape
+        save_path = os.path.join(self.save_dir, f"{self.__class__.__name__}_{self.depth}_{len(self.data_loader.train_ds)}_height_{shape}_epoch_{epoch}_val_{round(val_loss, 2)}_r2_{round(r2, 2)}.pth")
         torch.save(model_state, save_path)
         print(f"Model saved at {save_path}")
 
