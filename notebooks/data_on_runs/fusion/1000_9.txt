@@ -1,0 +1,46 @@
+Data loader train loader:  32 1000
+Image spatial dimensions:  torch.Size([32, 9, 384, 384])
+Number of input channels:  9
+gpu:  cuda:0
+Is cuda available:  True cuda
+Number of training images: 1000
+Epoch 1/150, Train Loss: 8.816861942410469, Val Loss: 41.99466419219971, R^2 Score: -3.4022884368896484
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MedicalCombinedResNetModel_18_1000_height_384_epoch_1_val_41.99_r2_41.99.pth
+Epoch 2/150, Train Loss: 6.999610647559166, Val Loss: 8.982557535171509, R^2 Score: 0.12194842100143433
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MedicalCombinedResNetModel_18_1000_height_384_epoch_2_val_8.98_r2_8.98.pth
+Epoch 3/150, Train Loss: 6.463595435023308, Val Loss: 18.673441648483276, R^2 Score: -1.0148651599884033
+Epoch 4/150, Train Loss: 6.564219780266285, Val Loss: 12.459557056427002, R^2 Score: -0.1068730354309082
+Epoch 5/150, Train Loss: 5.8512813448905945, Val Loss: 8.8952054977417, R^2 Score: 0.10687720775604248
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MedicalCombinedResNetModel_18_1000_height_384_epoch_5_val_8.9_r2_8.9.pth
+Epoch 6/150, Train Loss: 5.146131776273251, Val Loss: 10.747212409973145, R^2 Score: 0.006715536117553711
+Epoch 7/150, Train Loss: 4.616195075213909, Val Loss: 14.245739221572876, R^2 Score: -0.32109856605529785
+Epoch 8/150, Train Loss: 2.996224144473672, Val Loss: 10.014851331710815, R^2 Score: -0.044397592544555664
+Epoch 9/150, Train Loss: 2.408308446407318, Val Loss: 10.930594801902771, R^2 Score: -0.06135380268096924
+Epoch 10/150, Train Loss: 1.6915623527020216, Val Loss: 13.217419624328613, R^2 Score: -0.3319944143295288
+Epoch 11/150, Train Loss: 1.7551260739564896, Val Loss: 9.525206923484802, R^2 Score: 0.051135480403900146
+Epoch 12/150, Train Loss: 1.2055141683667898, Val Loss: 10.74279522895813, R^2 Score: -0.057866454124450684
+Epoch 13/150, Train Loss: 1.0421821121126413, Val Loss: 11.296956658363342, R^2 Score: -0.12708008289337158
+Epoch 14/150, Train Loss: 0.8201752677559853, Val Loss: 9.518558979034424, R^2 Score: 0.04567140340805054
+Epoch 15/150, Train Loss: 0.8754787370562553, Val Loss: 8.924627423286438, R^2 Score: 0.09505170583724976
+Epoch 16/150, Train Loss: 0.578105972148478, Val Loss: 8.952714800834656, R^2 Score: 0.09944647550582886
+Epoch 17/150, Train Loss: 0.6406413023360074, Val Loss: 9.372227907180786, R^2 Score: 0.11341643333435059
+Epoch 18/150, Train Loss: 0.6206295508891344, Val Loss: 8.336665153503418, R^2 Score: 0.14779716730117798
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MedicalCombinedResNetModel_18_1000_height_384_epoch_18_val_8.34_r2_8.34.pth
+Epoch 19/150, Train Loss: 0.6978728417307138, Val Loss: 10.065953731536865, R^2 Score: 0.08578896522521973
+
+
+
+Data loader train loader:  222 7095
+Image spatial dimensions:  torch.Size([32, 9, 384, 384])
+Number of input channels:  9
+gpu:  cuda:0
+Is cuda available:  True cuda
+Number of training images: 7095
+Epoch 1/150, Train Loss: 8.683521004410478, Val Loss: 105.59654344831195, R^2 Score: -10.672287940979004
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MedicalCombinedResNetModel_18_7095_height_384_epoch_1_val_105.6_r2_105.6.pth
+Epoch 2/150, Train Loss: 8.405172909702266, Val Loss: 7.660851546696255, R^2 Score: 0.15110385417938232
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MedicalCombinedResNetModel_18_7095_height_384_epoch_2_val_7.66_r2_7.66.pth
+Epoch 3/150, Train Loss: 7.894609269795117, Val Loss: 12.523815155029297, R^2 Score: -0.387783408164978
+Epoch 4/150, Train Loss: 7.7494562960959765, Val Loss: 8.049260003226143, R^2 Score: 0.10717213153839111
+Epoch 5/150, Train Loss: 7.599391794419503, Val Loss: 7.6097293836729865, R^2 Score: 0.15855103731155396
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MedicalCombinedResNetModel_18_7095_height_384_epoch_5_val_7.61_r2_7.61.pth

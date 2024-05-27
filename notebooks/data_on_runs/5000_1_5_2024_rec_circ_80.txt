@@ -1,4 +1,4 @@
-Is cuda available:  True
+    Is cuda available:  True
 Is mps available:  False
 Epoch 1/80, Train Loss: 1022528596411004.2, Val Loss: 3009844661058473.5
 Epoch 2/80, Train Loss: 791168.3730160327, Val Loss: 2333704.6144428253

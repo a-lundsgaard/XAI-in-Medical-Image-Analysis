@@ -50,7 +50,7 @@ class CombinedResNetModel(nn.Module):
 
     def forward(self, x):
 
-        if self.only_center_slice and self.n_input_channels == 3:
+        if False and self.n_input_channels == 3:
             # Extract only the center slice for each view
             print("Extracting only the center slice for each view")
             axial_input = x[:, self.n_input_channels-1:self.n_input_channels, :, :]
@@ -75,8 +75,9 @@ class CombinedResNetModel(nn.Module):
 
 
 class MedicalCombinedResNetModel(MedicalResNetModelBase):
-    def __init__(self, num_epochs, data_loader: NiftiDataLoader, learning_rate=0.01, weight_decay=None, dropout_rate=None, depth=18):
+    def __init__(self, num_epochs, data_loader: NiftiDataLoader, learning_rate=0.01, weight_decay=None, dropout_rate=None, depth=18, only_center_slice=False):
         super().__init__(num_epochs, data_loader, learning_rate, weight_decay, dropout_rate, depth, pretrained=False)
+        self.only_center_slice = only_center_slice
     
     def set_model(self):
         num_labels = len(self.data_loader.train_loader.dataset[0]['label'])
