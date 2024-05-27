@@ -85,13 +85,3 @@ class MedicalCombinedResNetModel(MedicalResNetModelBase):
             raise ValueError("Number of input channels should be divisible by 3.")
         input_channels_per_view = self.n_input_channels // 3
         self.model = CombinedResNetModel(n_input_channels=input_channels_per_view, resnet_depth=self.depth, num_labels=num_labels, pretrained=True)
-
-
-# Example of how to train this model
-# Initialize your data loader
-# data_loader = NiftiDataLoader(train_data, val_data, test_data)  # Assuming you have these datasets
-
-# # Instantiate and train the model
-# combined_model = MedicalCombinedResNetModel(num_epochs=100, data_loader=data_loader)
-# combined_model.train()
-# combined_model.evaluate()

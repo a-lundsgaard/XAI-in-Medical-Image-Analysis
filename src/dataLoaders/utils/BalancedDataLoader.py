@@ -32,10 +32,15 @@ class BalancedBatchSampler(Sampler):
         for idx, value in enumerate(var_values):
             self.class_indices[value].append(idx)
         
-        # print(f"Target distribution: {self.target_distribution}")
+        print(f"Target distribution: {self.target_distribution}")
         # print(f"Class indices: {self.class_indices}")
 
     def __iter__(self):
+
+        # if batch size is larger than the available samples, return all samples
+        if self.num_samples < self.batch_size:
+            return iter([list(range(self.num_samples))])
+        
         # Shuffle indices for each class
         for label in self.class_indices:
             random.shuffle(self.class_indices[label])
@@ -43,7 +48,7 @@ class BalancedBatchSampler(Sampler):
         # Generate balanced batches
         batch = []
         class_counts = {label: 0 for label in self.target_distribution.keys()}
-        # print(f"Class counts: {class_counts}")
+        print(f"Class counts: {class_counts}")
         batches_created = 0
 
         used_indices = set()
@@ -51,7 +56,7 @@ class BalancedBatchSampler(Sampler):
         while batches_created < (self.num_samples // self.batch_size):
             for label in self.target_distribution:
                 for _ in range(self.target_distribution[label]):
-                    if class_counts[label] < len(self.class_indices[label]):
+                    if class_counts[label] < len(self.class_indices[label]): # Ensure there are still samples left for the class
                         index = self.class_indices[label][class_counts[label]]
                         if index < self.num_samples and index not in used_indices:  # Ensure index is within bounds and not used
                             batch.append(index)
