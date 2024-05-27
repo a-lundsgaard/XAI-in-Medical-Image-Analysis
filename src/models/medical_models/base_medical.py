@@ -137,6 +137,8 @@ class MedicalResNetModelBase(ABC):
                 r2_metric.update(outputs, labels)
         average_loss = total_loss / count if count > 0 else 0
         r2_score = r2_metric.compute()
+        # convert r2_score to float
+        r2_score = r2_score.item()
         return average_loss, r2_score
 
     def train(self):
@@ -174,11 +176,12 @@ class MedicalResNetModelBase(ABC):
 
             if r2_score > best_r2_score:
                 best_r2_score = r2_score
+                self.save_model(epoch + 1, current_val_loss, r2=best_r2_score, is_best=False)
 
             # Save the best model
             if current_val_loss < best_val_loss:
                 best_val_loss = current_val_loss
-                self.save_model(epoch + 1, current_val_loss, r2=best_val_loss, is_best=True)
+                self.save_model(epoch + 1, current_val_loss, r2=best_r2_score, is_best=True)
 
             # Update cache if needed
             if self.data_loader.replace_rate == 1 and epoch == int(self.num_epochs * self.data_loader.cache_rate * data_refresh_count):
