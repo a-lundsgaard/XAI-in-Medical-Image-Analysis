@@ -1,0 +1,67 @@
+Epoch 1/100, Train Loss: 19.23703424358368, Val Loss: 10.665461897850037, R^2 Score: 0.6810665130615234
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_1_val_10.67_r2_0.68.pth
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_1_val_10.67_r2_0.68.pth
+Epoch 2/100, Train Loss: 3.853008303642273, Val Loss: 4.688954561948776, R^2 Score: 0.8592592477798462
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_2_val_4.69_r2_0.86.pth
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_2_val_4.69_r2_0.86.pth
+Epoch 3/100, Train Loss: 3.391660249710083, Val Loss: 2.548200413584709, R^2 Score: 0.9234485626220703
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_3_val_2.55_r2_0.92.pth
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_3_val_2.55_r2_0.92.pth
+Epoch 4/100, Train Loss: 2.027282841682434, Val Loss: 1.627386912703514, R^2 Score: 0.950773298740387
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_4_val_1.63_r2_0.95.pth
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_4_val_1.63_r2_0.95.pth
+Epoch 5/100, Train Loss: 1.5596654682159423, Val Loss: 1.3015090338885784, R^2 Score: 0.9606968760490417
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_5_val_1.3_r2_0.96.pth
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_5_val_1.3_r2_0.96.pth
+Epoch 6/100, Train Loss: 1.3579326841831207, Val Loss: 2.591620095074177, R^2 Score: 0.9224324226379395
+Epoch 7/100, Train Loss: 1.4729704782962798, Val Loss: 5.671975255012512, R^2 Score: 0.830202579498291
+Epoch 8/100, Train Loss: 1.5839222161769866, Val Loss: 10.602109491825104, R^2 Score: 0.6819795370101929
+Epoch 9/100, Train Loss: 1.3267022321224213, Val Loss: 1.3065143302083015, R^2 Score: 0.960750937461853
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_9_val_1.31_r2_0.96.pth
+Epoch 10/100, Train Loss: 1.0140125160217286, Val Loss: 1.0400067828595638, R^2 Score: 0.9685366749763489
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_10_val_1.04_r2_0.97.pth
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_10_val_1.04_r2_0.97.pth
+Epoch 11/100, Train Loss: 1.6159970026016235, Val Loss: 1.1858632154762745, R^2 Score: 0.9640418887138367
+Epoch 12/100, Train Loss: 1.0165259058475495, Val Loss: 1.5054244436323643, R^2 Score: 0.9547268152236938
+Epoch 13/100, Train Loss: 1.471100159406662, Val Loss: 1.6169213391840458, R^2 Score: 0.9514036774635315
+Epoch 14/100, Train Loss: 1.0158201818466186, Val Loss: 1.30340226739645, R^2 Score: 0.9608578681945801
+Epoch 15/100, Train Loss: 0.7967166551351548, Val Loss: 1.186480414122343, R^2 Score: 0.9643248915672302
+Epoch 16/100, Train Loss: 0.8619209868907929, Val Loss: 1.3212668970227242, R^2 Score: 0.9606077671051025
+Epoch 17/100, Train Loss: 0.8750495461225509, Val Loss: 1.1960663087666035, R^2 Score: 0.9641668796539307
+Epoch 18/100, Train Loss: 0.659407203912735, Val Loss: 1.3603872060775757, R^2 Score: 0.9592916965484619
+Epoch 19/100, Train Loss: 0.7497248667478561, Val Loss: 1.0495921708643436, R^2 Score: 0.9683138728141785
+Epoch 20/100, Train Loss: 0.537893324971199, Val Loss: 2.3094722256064415, R^2 Score: 0.931175947189331
+Epoch 21/100, Train Loss: 0.5385901067256927, Val Loss: 0.9734668135643005, R^2 Score: 0.9706689715385437
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_21_val_0.97_r2_0.97.pth
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_21_val_0.97_r2_0.97.pth
+Epoch 22/100, Train Loss: 0.7882346370220185, Val Loss: 1.6098942905664444, R^2 Score: 0.9513921141624451
+Epoch 23/100, Train Loss: 0.9526447557210922, Val Loss: 2.1832164749503136, R^2 Score: 0.9347392320632935
+Epoch 24/100, Train Loss: 0.6346207216978074, Val Loss: 1.381221979856491, R^2 Score: 0.958511233329773
+Epoch 25/100, Train Loss: 0.6018075108528137, Val Loss: 1.6843098029494286, R^2 Score: 0.9496473073959351
+Epoch 26/100, Train Loss: 0.5342408102750779, Val Loss: 1.357363410294056, R^2 Score: 0.9592355489730835
+Epoch 27/100, Train Loss: 0.5328821485042572, Val Loss: 0.7116682045161724, R^2 Score: 0.9786313772201538
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_27_val_0.71_r2_0.98.pth
+Model saved at /Users/mraabo/computer_science/year_3/bachelor/XAI-in-Medical-Image-Analysis/src/models/medical_models/saved_models/MedicalCombinedResNetModel_18_3999_height_torch.Size([32, 9, 256, 256])_epoch_27_val_0.71_r2_0.98.pth
+Epoch 28/100, Train Loss: 0.5998936080932618, Val Loss: 1.4931738004088402, R^2 Score: 0.9551975727081299
+Epoch 29/100, Train Loss: 0.46470179116725924, Val Loss: 0.8742263335734606, R^2 Score: 0.9734574556350708
+Epoch 30/100, Train Loss: 0.6403072959184647, Val Loss: 1.0490425378084183, R^2 Score: 0.9682167172431946
+Epoch 31/100, Train Loss: 0.5781882597208023, Val Loss: 1.66726253926754, R^2 Score: 0.9497514963150024
+Epoch 32/100, Train Loss: 0.8340552874803543, Val Loss: 1.5204279012978077, R^2 Score: 0.9544210433959961
+Epoch 33/100, Train Loss: 0.6512886317968368, Val Loss: 1.1670379675924778, R^2 Score: 0.96477210521698
+Epoch 34/100, Train Loss: 0.7746770894527435, Val Loss: 2.498722694814205, R^2 Score: 0.9255913496017456
+Epoch 35/100, Train Loss: 0.7482260544300079, Val Loss: 1.0636344999074936, R^2 Score: 0.9680153727531433
+Epoch 36/100, Train Loss: 0.5125611593723297, Val Loss: 1.0284205842763186, R^2 Score: 0.969109833240509
+Epoch 37/100, Train Loss: 0.7382230004072189, Val Loss: 0.950827332213521, R^2 Score: 0.9714280366897583
+Epoch 38/100, Train Loss: 0.4822349886894226, Val Loss: 1.0246296636760235, R^2 Score: 0.9692671298980713
+Epoch 39/100, Train Loss: 0.4530429875850677, Val Loss: 0.8773050177842379, R^2 Score: 0.973930299282074
+Epoch 40/100, Train Loss: 0.3922253267765045, Val Loss: 1.080050066113472, R^2 Score: 0.9673383831977844
+Epoch 41/100, Train Loss: 0.34479616075754166, Val Loss: 0.8304684534668922, R^2 Score: 0.9749151468276978
+Epoch 42/100, Train Loss: 0.527404448390007, Val Loss: 1.1099027916789055, R^2 Score: 0.9668310880661011
+Epoch 43/100, Train Loss: 0.4554801584482193, Val Loss: 0.9200235046446323, R^2 Score: 0.9723455905914307
+Epoch 44/100, Train Loss: 0.583136124253273, Val Loss: 1.1164709851145744, R^2 Score: 0.9664045572280884
+Epoch 45/100, Train Loss: 0.7331609624624252, Val Loss: 2.00684305280447, R^2 Score: 0.9397934079170227
+Epoch 46/100, Train Loss: 0.514847836136818, Val Loss: 1.0077662393450737, R^2 Score: 0.9699236750602722
+Epoch 47/100, Train Loss: 0.4755699311494827, Val Loss: 2.1731093302369118, R^2 Score: 0.9344990849494934
+Epoch 48/100, Train Loss: 0.5405153967142106, Val Loss: 1.0816452782601118, R^2 Score: 0.9674997329711914
+Epoch 49/100, Train Loss: 0.46954861605167386, Val Loss: 1.6132167056202888, R^2 Score: 0.9520647525787354
+Epoch 50/100, Train Loss: 0.3672271341085434, Val Loss: 0.9946437478065491, R^2 Score: 0.9703479409217834
