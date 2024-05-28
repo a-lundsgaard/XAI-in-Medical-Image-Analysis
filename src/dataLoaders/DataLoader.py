@@ -40,8 +40,8 @@ class DataSetLoader:
             labels = np.array(labels, dtype=np.float32)
 
             # Split dataset
-            X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, random_state=42)
-            X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.2)
+            X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25)
 
             # Create TensorDatasets and DataLoaders
             train_dataset = TensorDataset(torch.tensor(X_train), torch.tensor(y_train))
