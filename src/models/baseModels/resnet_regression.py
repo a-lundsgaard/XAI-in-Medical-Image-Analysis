@@ -102,13 +102,15 @@ class ResNetModel:
                 loss: Tensor = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
-
                 running_train_loss += loss.item()
-                running_val_loss += self.validation_loss()
-            
-            print(f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_train_loss/len(self.dataLoader.train_loader)}, Val Loss: {running_val_loss/len(self.dataLoader.val_loader)}")
 
-            epoch_val_losses.append(running_val_loss/len(self.dataLoader.val_loader))
+            running_val_loss = self.validation_loss()
+            # print lenght of train_loader and val_loader
+            print(f"Length of train_loader: {len(self.dataLoader.train_loader.dataset)}, Length of val_loader: {len(self.dataLoader.val_loader.dataset)}, Length of test_loader: {len(self.dataLoader.test_loader.dataset)}")
+            
+            print(f"Epoch {epoch+1}/{self.num_epochs}, Train Loss: {running_train_loss/len(self.dataLoader.train_loader)}, Val Loss: {running_val_loss}")
+
+            epoch_val_losses.append(running_val_loss)
                             
             # Early stopping
             if epoch > 2:
@@ -119,12 +121,13 @@ class ResNetModel:
 
     def validation_loss(self):
         self.model.eval()
+        running_val_loss = 0.0
         with torch.no_grad():
             for images, labels in self.dataLoader.val_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 outputs = self.model(images).flatten()
-                loss = self.criterion(outputs, labels.float()) 
-                return loss.item()
+                running_val_loss += self.criterion(outputs, labels.float()) 
+        return running_val_loss / len(self.dataLoader.val_loader)
 
     def evaluate(self):
         self.model.eval()
