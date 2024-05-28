@@ -113,7 +113,7 @@ class ShapeGenerator3D:
             placed = True
 
         # Add background noise
-        volume = self.add_noise(volume, noise_level=10)
+        volume = self.add_noise(volume, noise_level=100)
         
         # Convert the volume to a PyTorch tensor and save it
         tensor_volume = torch.tensor(volume)
@@ -130,5 +130,5 @@ class ShapeGenerator3D:
 
 
 if __name__ == '__main__':
-    generator = ShapeGenerator3D(num_volumes=50, center_deviation=0.1)
+    generator = ShapeGenerator3D(num_volumes=5000, center_deviation=0.1)
     generator.generate_images()
