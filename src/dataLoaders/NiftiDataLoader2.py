@@ -222,7 +222,7 @@ class NiftiDataLoader:
 
         base_transforms.extend([
             ScaleIntensityd(keys=["image"], minv=0.0, maxv=1.0, factor=1.0),
-            # NormalizeIntensityD(keys=["image"], nonzero=True, channel_wise=True),
+            NormalizeIntensityD(keys=["image"], nonzero=True, channel_wise=True),
             ToTensord(keys=["image"])
         ])
 

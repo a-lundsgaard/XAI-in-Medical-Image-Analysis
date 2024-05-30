@@ -130,5 +130,5 @@ class ShapeGenerator3D:
 
 
 if __name__ == '__main__':
-    generator = ShapeGenerator3D(num_volumes=5000, center_deviation=0.1)
+    generator = ShapeGenerator3D(num_volumes=1000, center_deviation=0.1)
     generator.generate_images()

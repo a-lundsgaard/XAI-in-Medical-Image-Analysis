@@ -4,10 +4,10 @@ import torch.nn as nn
 from src.dataLoaders.NiftiDataLoader2 import NiftiDataLoader
 from torchvision.models import ResNet, resnet18, resnet34, resnet50
 from torchvision import models
-from src.models.medical_models.base_medical import MedicalResNetModelBase
+from src.models.medical_models.base_medical import BaseMedical
 
 
-class MedicalResNetModel(MedicalResNetModelBase):
+class MedicalResNetModel(BaseMedical):
     def __init__(self, num_epochs, data_loader: NiftiDataLoader, learning_rate=0.01, weight_decay=None, dropout_rate=None, depth=18):
         super().__init__(num_epochs, data_loader, learning_rate, weight_decay, dropout_rate, depth, pretrained=False)
 

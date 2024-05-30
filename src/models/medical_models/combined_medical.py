@@ -3,10 +3,15 @@ import torch.nn as nn
 from torchvision.models import resnet18, resnet34, resnet50
 from torchvision import models
 from src.dataLoaders.NiftiDataLoader2 import NiftiDataLoader
-from src.models.medical_models.base_medical import MedicalResNetModelBase
+from src.models.medical_models.base_medical import BaseMedical
+
+import torch
+import torch.nn as nn
+from torchvision.models import resnet18, resnet34, resnet50
+from torchvision import models
 
 class CombinedResNetModel(nn.Module):
-    def __init__(self, n_input_channels=1, resnet_depth=18, num_labels=1, pretrained=True, only_center_slice=False):
+    def __init__(self, n_input_channels=1, resnet_depth=18, num_labels=1, pretrained=True):
         super(CombinedResNetModel, self).__init__()
         
         # Initialize ResNet models for each view
@@ -15,12 +20,14 @@ class CombinedResNetModel(nn.Module):
         self.resnet_sagittal = self._initialize_resnet(resnet_depth, n_input_channels, pretrained)
         self.resnet_depth = resnet_depth
         self.n_input_channels = n_input_channels
-        self.only_center_slice = only_center_slice
         
-        # Feature extractor layers
-        self.axial_features = nn.Sequential(*list(self.resnet_axial.children())[:-1])
-        self.coronal_features = nn.Sequential(*list(self.resnet_coronal.children())[:-1])
-        self.sagittal_features = nn.Sequential(*list(self.resnet_sagittal.children())[:-1])
+        # Feature extractor layers (all layers except the average pooling and fully connected layers)
+        self.axial_features = nn.Sequential(*list(self.resnet_axial.children())[:-2])
+        self.coronal_features = nn.Sequential(*list(self.resnet_coronal.children())[:-2])
+        self.sagittal_features = nn.Sequential(*list(self.resnet_sagittal.children())[:-2])
+        
+        # Global average pooling layer
+        self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         
         # Fully connected layer for combining features
         num_features = self.resnet_axial.fc.in_features * 3  # multiply by 3 since we combine three views
@@ -49,22 +56,23 @@ class CombinedResNetModel(nn.Module):
         return model
 
     def forward(self, x):
-
-        if False and self.n_input_channels == 3:
-            # Extract only the center slice for each view
-            print("Extracting only the center slice for each view")
-            axial_input = x[:, self.n_input_channels-1:self.n_input_channels, :, :]
-            coronal_input = x[:, 2*self.n_input_channels-1:2*self.n_input_channels, :, :]
-            sagittal_input = x[:, 3*self.n_input_channels-1:3*self.n_input_channels, :, :]
-        else:
-            axial_input = x[:, :self.n_input_channels, :, :]
-            coronal_input = x[:, self.n_input_channels:2*self.n_input_channels, :, :]
-            sagittal_input = x[:, 2*self.n_input_channels:, :, :]
+        axial_input = x[:, :self.n_input_channels, :, :]
+        coronal_input = x[:, self.n_input_channels:2*self.n_input_channels, :, :]
+        sagittal_input = x[:, 2*self.n_input_channels:, :, :]
         
         # Extract features from each view
-        axial_features = self.axial_features(axial_input).view(x.size(0), -1)
-        coronal_features = self.coronal_features(coronal_input).view(x.size(0), -1)
-        sagittal_features = self.sagittal_features(sagittal_input).view(x.size(0), -1)
+        axial_features = self.global_avg_pool(self.axial_features(axial_input))
+        coronal_features = self.global_avg_pool(self.coronal_features(coronal_input))
+        sagittal_features = self.global_avg_pool(self.sagittal_features(sagittal_input))
+
+        # print("axial_features.shape", axial_features.shape) # torch.Size([32, 512, 1, 1])
+        
+        # Flatten the features
+        axial_features = axial_features.view(axial_features.size(0), -1)
+        coronal_features = coronal_features.view(coronal_features.size(0), -1)
+        sagittal_features = sagittal_features.view(sagittal_features.size(0), -1)
+
+        # print("axial_features reshape", axial_features.shape) # torch.Size([32, 512])
         
         # Combine features
         combined_features = torch.cat((axial_features, coronal_features, sagittal_features), dim=1)
@@ -74,7 +82,7 @@ class CombinedResNetModel(nn.Module):
         return output
 
 
-class MedicalCombinedResNetModel(MedicalResNetModelBase):
+class MedicalCombinedResNetModel(BaseMedical):
     def __init__(self, num_epochs, data_loader: NiftiDataLoader, learning_rate=0.01, weight_decay=None, dropout_rate=None, depth=18, only_center_slice=False):
         super().__init__(num_epochs, data_loader, learning_rate, weight_decay, dropout_rate, depth, pretrained=False)
         self.only_center_slice = only_center_slice
