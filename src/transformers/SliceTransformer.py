@@ -36,12 +36,12 @@ class SliceAggregateTransform(MapTransform):
             raise ValueError(f"Image data is too small to slice: {img_data.shape}")
 
         # Slicing from different directions
-        axial_slice = img_data[:, :, width // 2]
+        sagittal_slice = img_data[:, :, width // 2]
         coronal_slice = img_data[:, height // 2, :]
-        sagittal_slice = img_data[depth // 2, :, :]
+        axial = img_data[depth // 2, :, :]
 
         # Stack each slice into a single 3-channel image
-        combined_image = np.stack(( coronal_slice, sagittal_slice), axis=0)
+        combined_image = np.stack(( coronal_slice, sagittal_slice, axial), axis=0)
 
         #combined_image = np.stack((coronal_slice), axis=0)
 

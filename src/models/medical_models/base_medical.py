@@ -80,6 +80,13 @@ class MedicalResNetModelBase(ABC):
             self.model.fc = nn.Linear(num_features, num_labels) 
         self.model.to(self.device)
 
+        # print parameters
+        print("model: ", self.model.parameters())
+
+        for name, param in self.model.named_parameters():
+            if 'adaptive_slicing.deviation' in name:
+                print(f'Found adaptive_slicing.deviation in model parameters: {name} -> {param.data}')
+
         print("gpu: ", next(self.model.parameters()).device)
         
         # Loss and optimizer
@@ -208,6 +215,10 @@ class MedicalResNetModelBase(ABC):
         r2_score = r2_metric.compute()
         print(f'R^2 score of the network on the test images: {r2_score}')
         print(f"Test Loss: {total_loss / len(self.data_loader.test_loader)}")
+
+        for name, param in self.model.named_parameters():
+            if 'adaptive_slicing.deviation' in name:
+                print(f'Found adaptive_slicing.deviation in model parameters: {name} -> {param.data}')
 
         # Log evaluation metrics to TensorBoard
         self.writer.add_scalar('Loss/test', total_loss / len(self.data_loader.test_loader), 0)
