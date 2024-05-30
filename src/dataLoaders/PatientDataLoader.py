@@ -71,11 +71,12 @@ class PatientDataProcessor:
         self.labels = labels
         all_data = pd.DataFrame()
         for visit_no in range(0, 12):
-            all_data = pd.concat([all_data, self.get_clinical_data(visit_no, labels=labels)], axis=1)
+            all_data = pd.concat([all_data, self.get_clinical_data(visit_no, labels=labels, save=False)], axis=1)
         self.data = all_data
         return all_data    
     
-    def get_clinical_data(self, visit_no: int, labels = ["WOMKP"]):
+    def get_clinical_data(self, visit_no: int, labels = ["WOMKP"], save = True):
+        self.labels = labels
         visit = "V0" + str(visit_no) if visit_no < 10 else "V" + str(visit_no)
         self.visit = visit
         self.visits[visit_no] = visit
@@ -91,6 +92,9 @@ class PatientDataProcessor:
 
         # self.clean_data(df_visit)
         df_visit = self.get_enrollment_data(df_visit)
+
+        if save:
+            self.data = df_visit
         # print(f"Enrollment data: {self.enroll_df}")
         # self.fill_missing_with_mean(df_visit, variables_of_interest)
         return df_visit
