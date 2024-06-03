@@ -6,13 +6,14 @@ from src.XAI.utils.SaveFiles import PLTSaver
 from src.models.baseModels.resnet_regression import ResNetModel
 from torch.utils.data import TensorDataset
 import torch
+from src.models.medical_models.base_medical import BaseMedical
 
 
 class BaseXAI(ABC):
     """
     Abstract class for generating images.
     """
-    def __init__(self, modelWrapper: ResNetModel):
+    def __init__(self, modelWrapper: ResNetModel | BaseMedical):
         self.modelWrapper = modelWrapper
         self.fileSaver = PLTSaver(self.__class__.__name__)
         self.heatmap: Tensor = None
@@ -23,6 +24,7 @@ class BaseXAI(ABC):
             self.device = torch.device("mps")
         else:
             self.device = torch.device("cpu")
+        self.modelWrapper.model.eval()
 
     def find_last_conv_layer(self, model: torch.nn.Module):
         """

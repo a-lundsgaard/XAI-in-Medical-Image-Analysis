@@ -8,8 +8,10 @@ from torchvision.models import resnet18  # Adjust as needed
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import TensorDataset
+from scipy.stats import f
 
-class MedicalResNetModelBase(ABC):
+class BaseMedical(ABC):
     def __init__(self,
                  num_epochs,
                  data_loader: NiftiDataLoader,
@@ -80,7 +82,12 @@ class MedicalResNetModelBase(ABC):
             self.model.fc = nn.Linear(num_features, num_labels) 
         self.model.to(self.device)
 
-        print("gpu: ", next(self.model.parameters()).device)
+
+        # for name, param in self.model.named_parameters():
+        #     if 'adaptive_slicing.deviation' in name:
+        #         print(f'Found adaptive_slicing.deviation in model parameters: {name} -> {param.data}')
+
+        print("GPU: ", next(self.model.parameters()).device)
         
         # Loss and optimizer
         self.criterion = nn.MSELoss()
@@ -120,6 +127,11 @@ class MedicalResNetModelBase(ABC):
     @abstractmethod
     def set_model(self):
         raise NotImplementedError
+    
+    def calculate_p_value(self, r2_score, lenght_of_dataset, n_outputs):
+        f_stat = (r2_score * (lenght_of_dataset - n_outputs - 1)) / ((1 - r2_score) * n_outputs)
+        p_value = 1 - f.cdf(f_stat, n_outputs, lenght_of_dataset - n_outputs - 1)
+        return p_value
 
     def validation_loss(self):
         self.model.eval()
@@ -131,6 +143,7 @@ class MedicalResNetModelBase(ABC):
                 images = batch_data["image"].to(self.device)
                 labels = torch.stack([value.float().to(self.device) for value in batch_data["label"].values()], dim=1)
                 outputs = self.model(images)
+                print("Outputs: ", outputs.shape)
                 loss = self.criterion(outputs, labels)
                 total_loss += loss.item()
                 count += 1
@@ -139,12 +152,16 @@ class MedicalResNetModelBase(ABC):
         r2_score = r2_metric.compute()
         # convert r2_score to float
         r2_score = r2_score.item()
-        return average_loss, r2_score
+
+        n = len(self.data_loader.val_loader.dataset)
+        k = outputs.shape[1]
+        p_value = self.calculate_p_value(r2_score, n, k)
+
+        return average_loss, r2_score, p_value
 
     def train(self):
 
         self.data_loader.run_replacement_thread()
-        print("Is cuda available: ", torch.cuda.is_available(), self.device)
         print(f"Number of training images: {len(self.data_loader.train_ds)}")
         data_refresh_count = 1
 
@@ -154,6 +171,7 @@ class MedicalResNetModelBase(ABC):
         for epoch in range(self.num_epochs):
             self.model.train()
             running_loss = 0.0
+            has_been_saved = False
 
             for batch_data in self.data_loader.train_loader:
                 images = batch_data["image"].to(self.device)
@@ -167,8 +185,8 @@ class MedicalResNetModelBase(ABC):
                 running_loss += loss.item()
 
             # Compute validation loss once per epoch
-            current_val_loss, r2_score = self.validation_loss()
-            print(f"Epoch {epoch + 1}/{self.num_epochs}, Train Loss: {running_loss / len(self.data_loader.train_loader)}, Val Loss: {current_val_loss}, R^2 Score: {r2_score}")
+            current_val_loss, r2_score, p_value = self.validation_loss()
+            print(f"Epoch {epoch + 1}/{self.num_epochs}, Train Loss: {running_loss / len(self.data_loader.train_loader)}, Val Loss: {current_val_loss}, R^2 Score: {r2_score}, P-value: {p_value}")
 
             # Log losses to TensorBoard
             self.writer.add_scalar('Loss/train', running_loss / len(self.data_loader.train_loader), epoch)
@@ -177,9 +195,10 @@ class MedicalResNetModelBase(ABC):
             if r2_score > best_r2_score:
                 best_r2_score = r2_score
                 self.save_model(epoch + 1, current_val_loss, r2=best_r2_score, is_best=False)
+                has_been_saved = True
 
             # Save the best model
-            if current_val_loss < best_val_loss:
+            if current_val_loss < best_val_loss and not has_been_saved:
                 best_val_loss = current_val_loss
                 self.save_model(epoch + 1, current_val_loss, r2=best_r2_score, is_best=True)
 
@@ -191,12 +210,34 @@ class MedicalResNetModelBase(ABC):
         self.data_loader.shutdown_cache()
         self.writer.close()
 
+    def get_single_image(self, data: TensorDataset, index: int = 0):
+        if data is not None:
+            # Fetch the image and label tensors
+            # print("Data: ", data.__getitem__(index)["image"])
+            if index < len(data):
+                img_tensor = data.__getitem__(index)["image"]
+                label_dict: Dict = data.__getitem__(index)["label"]
+                # Add a batch dimension, convert to float, and move to the correct device
+                print(label_dict)
+                img_tensor = img_tensor.cpu()
+
+                label_value = [value for value in label_dict.values()][0]
+                # Move the label to the correct device
+                return img_tensor, label_value
+            
+    def get_single_test_image(self, index=0):
+        return self.get_single_image(self.data_loader.test_ds, index)
+    
+    def get_single_train_image(self, index=0):
+        return self.get_single_image(self.data_loader.train_ds, index)
+
     def evaluate(self, loader=None):
         self.model.eval()
         total_loss = 0.0
         r2_metric = R2Score().to(self.device)
+        data_loader = loader if loader else self.data_loader.test_loader
         with torch.no_grad():
-            for batch_data in loader if loader else self.data_loader.test_loader:
+            for batch_data in data_loader:
                 images = batch_data["image"].to(self.device)
                 labels = torch.stack([value.float().to(self.device) for value in batch_data["label"].values()], dim=1)
                 predicted = self.model(images)
@@ -206,8 +247,19 @@ class MedicalResNetModelBase(ABC):
                 r2_metric.update(predicted, labels)
 
         r2_score = r2_metric.compute()
-        print(f'R^2 score of the network on the test images: {r2_score}')
+        r2_score = r2_score.item()
+
+        n = len(data_loader.dataset)
+        k = predicted.shape[1]
+
+        p_value = self.calculate_p_value(r2_score, n, k)
+        
+        print(f'R^2 score of the network on the test images: {r2_score}, p-value: {p_value}')
         print(f"Test Loss: {total_loss / len(self.data_loader.test_loader)}")
+
+        # for name, param in self.model.named_parameters():
+        #     if 'adaptive_slicing.deviation' in name:
+        #         print(f'Found adaptive_slicing.deviation in model parameters: {name} -> {param.data}')
 
         # Log evaluation metrics to TensorBoard
         self.writer.add_scalar('Loss/test', total_loss / len(self.data_loader.test_loader), 0)

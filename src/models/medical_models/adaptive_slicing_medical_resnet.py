@@ -4,7 +4,7 @@ from torchvision.models import resnet18, resnet34, resnet50
 from torchvision import models
 from src.models.medical_models.utils.AdaptiveSlicing import AdaptiveSlicingModule
 from src.dataLoaders.NiftiDataLoader2 import NiftiDataLoader
-from src.models.medical_models.base_medical import MedicalResNetModelBase
+from src.models.medical_models.base_medical import BaseMedical
 from torchvision.models.resnet import ResNet, BasicBlock
 
 class ResnetAdaptive(ResNet):
@@ -19,7 +19,7 @@ class ResnetAdaptive(ResNet):
         return super(ResnetAdaptive, self).forward(x)
     
 
-class AdaptiveMedicalResNetModel(MedicalResNetModelBase):
+class AdaptiveMedicalResNetModel(BaseMedical):
     def __init__(self, num_epochs, data_loader: NiftiDataLoader, learning_rate=0.01, weight_decay=None, dropout_rate=None, depth=18):
         super().__init__(num_epochs, data_loader, learning_rate, weight_decay, dropout_rate, depth, pretrained=False)
 
