@@ -1,0 +1,55 @@
+Data loader train loader:  200 799
+Image spatial dimensions:  torch.Size([4, 1, 64, 64, 64])
+Number of input channels:  1
+Spatial dims:  3
+GPU:  cuda:0
+Number of training images: 799
+Epoch 1/100, Train Loss: 33.23470134019852, Val Loss: 84.75294647216796, R^2 Score: -1.5191264152526855, P-value: 1.0
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_1_val_84.75_r2_0.pth
+Epoch 2/100, Train Loss: 15.2217045712471, Val Loss: 17.72797727870941, R^2 Score: 0.4730682969093323, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_2_val_17.73_r2_0.47.pth
+Epoch 3/100, Train Loss: 12.89214106798172, Val Loss: 7.430000653505325, R^2 Score: 0.7791568040847778, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_3_val_7.43_r2_0.78.pth
+Epoch 4/100, Train Loss: 11.867620416283607, Val Loss: 7.392631608486176, R^2 Score: 0.7802675366401672, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_4_val_7.39_r2_0.78.pth
+Epoch 5/100, Train Loss: 10.365448404848575, Val Loss: 66.02211573791504, R^2 Score: -0.962386965751648, P-value: 1.0
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_5_val_66.02_r2_0.78.pth
+Epoch 6/100, Train Loss: 10.829708078354598, Val Loss: 15.252258171081543, R^2 Score: 0.546654462814331, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_6_val_15.25_r2_0.78.pth
+Epoch 7/100, Train Loss: 9.301541539430618, Val Loss: 25.79737870502472, R^2 Score: 0.23321980237960815, P-value: 1.1102230246251565e-16
+Epoch 8/100, Train Loss: 9.769473266601562, Val Loss: 10.638367587566377, R^2 Score: 0.6837939023971558, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_8_val_10.64_r2_0.78.pth
+Epoch 9/100, Train Loss: 8.383076163381338, Val Loss: 3.7567170416712763, R^2 Score: 0.8883384466171265, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_9_val_3.76_r2_0.89.pth
+Epoch 10/100, Train Loss: 6.744234899431467, Val Loss: 5.096406554579735, R^2 Score: 0.8485186100006104, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_10_val_5.1_r2_0.89.pth
+Epoch 11/100, Train Loss: 7.372279890663922, Val Loss: 31.315355326652526, R^2 Score: 0.06920862197875977, P-value: 2.324212933224601e-09
+Epoch 12/100, Train Loss: 6.538008502870798, Val Loss: 17.272346828460694, R^2 Score: 0.486611008644104, P-value: 1.1102230246251565e-16
+Epoch 13/100, Train Loss: 7.795987415611744, Val Loss: 3.6231722587347033, R^2 Score: 0.8923078179359436, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_13_val_3.62_r2_0.89.pth
+Epoch 14/100, Train Loss: 5.149704123660922, Val Loss: 3.711851740092039, R^2 Score: 0.8896719813346863, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysi s\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_14_val_3.71_r2_0.89.pth
+Epoch 15/100, Train Loss: 6.035051208883524, Val Loss: 9.068212177991867, R^2 Score: 0.7304638624191284, P-value: 1.1102230246251565e-16
+Epoch 16/100, Train Loss: 5.261593690104783, Val Loss: 4.227071340322494, R^2 Score: 0.874358057975769, P-value: 1.1102230246251565e-16
+Epoch 17/100, Train Loss: 4.670832923874259, Val Loss: 6.828263651371002, R^2 Score: 0.7970423698425293, P-value: 1.1102230246251565e-16
+Epoch 18/100, Train Loss: 3.1838434820994737, Val Loss: 5.663283923625946, R^2 Score: 0.8316692113876343, P-value: 1.1102230246251565e-16
+Epoch 19/100, Train Loss: 3.1360918802022932, Val Loss: 4.772787491559982, R^2 Score: 0.8581376075744629, P-value: 1.1102230246251565e-16
+Epoch 20/100, Train Loss: 3.2762967391498385, Val Loss: 6.899961441993713, R^2 Score: 0.7949112057685852, P-value: 1.1102230246251565e-16
+Epoch 21/100, Train Loss: 2.690681654959917, Val Loss: 3.7337629752755164, R^2 Score: 0.8890206813812256, P-value: 1.1102230246251565e-16
+Epoch 22/100, Train Loss: 3.0407165502011777, Val Loss: 6.93596776676178, R^2 Score: 0.7938410043716431, P-value: 1.1102230246251565e-16
+Epoch 23/100, Train Loss: 2.7265897695720196, Val Loss: 4.164673043519259, R^2 Score: 0.8762127161026001, P-value: 1.1102230246251565e-16
+Epoch 24/100, Train Loss: 2.15442393258214, Val Loss: 5.579667741775513, R^2 Score: 0.8341546058654785, P-value: 1.1102230246251565e-16
+Epoch 25/100, Train Loss: 2.5873091336339713, Val Loss: 6.213067687034607, R^2 Score: 0.8153278827667236, P-value: 1.1102230246251565e-16
+Epoch 26/100, Train Loss: 2.1655673935636877, Val Loss: 3.9030492402017116, R^2 Score: 0.8839889764785767, P-value: 1.1102230246251565e-16
+Epoch 27/100, Train Loss: 2.1641060287877916, Val Loss: 8.795496693611145, R^2 Score: 0.7385698556900024, P-value: 1.1102230246251565e-16
+Epoch 28/100, Train Loss: 2.043239412382245, Val Loss: 4.755160442471504, R^2 Score: 0.8586615324020386, P-value: 1.1102230246251565e-16
+Epoch 29/100, Train Loss: 2.2176124273240565, Val Loss: 4.203211808696389, R^2 Score: 0.8750671744346619, P-value: 1.1102230246251565e-16
+Epoch 30/100, Train Loss: 2.0921695867180823, Val Loss: 3.7455914390087126, R^2 Score: 0.8886691331863403, P-value: 1.1102230246251565e-16
+Epoch 31/100, Train Loss: 1.583630415201187, Val Loss: 3.3823084385991096, R^2 Score: 0.8994671106338501, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_31_val_3.38_r2_0.9.pth
+Epoch 32/100, Train Loss: 1.4512965191714466, Val Loss: 4.450686682581901, R^2 Score: 0.8677114844322205, P-value: 1.1102230246251565e-16
+Epoch 33/100, Train Loss: 1.5310691041126847, Val Loss: 3.6155574068725107, R^2 Score: 0.8925341367721558, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_33_val_3.62_r2_0.9.pth
+Epoch 34/100, Train Loss: 1.803452265188098, Val Loss: 3.4259806363582612, R^2 Score: 0.8981689810752869, P-value: 1.1102230246251565e-16
+Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_799_height_torch.Size([4, 1, 64, 64, 64])_epoch_34_val_3.43_r2_0.9.pth
+Epoch 35/100, Train Loss: 1.3182586029358208, Val Loss: 5.355163451671601, R^2 Score: 0.8408275842666626, P-value: 1.1102230246251565e-16
