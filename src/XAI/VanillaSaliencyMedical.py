@@ -57,7 +57,7 @@ class VanillaSaliency(BaseXAI):
 
                     axes[i, j].imshow(original_image, cmap='gray')
                     axes[i, j].imshow(saliency, cmap='hot', alpha=0.5)
-                    axes[i, j].set_title(f"{view_titles[i]} - Channel {j + 1}")
+                    axes[i, j].set_title(f"{view_titles[i]} - Channel {j + 1}", fontsize=24)
                     axes[i, j].axis('off')
 
                 # Combined overlay for the current view
@@ -66,7 +66,7 @@ class VanillaSaliency(BaseXAI):
 
                 axes[i, channels_per_view].imshow(combined_image, cmap='gray')
                 axes[i, channels_per_view].imshow(combined_saliency, cmap='hot', alpha=0.5)
-                axes[i, channels_per_view].set_title(f"{view_titles[i]} - Combined. Label: {input_label} Prediction: {round(target.item(), 2)}")
+                axes[i, channels_per_view].set_title(f"{view_titles[i]} - Combined. Label: {input_label} Prediction: {round(target.item(), 2)}", fontsize=22)
                 axes[i, channels_per_view].axis('off')
 
             if save_dir and save_output:

@@ -90,14 +90,14 @@ class GradCamResnet(BaseXAI):
                 for j in range(self.modelWrapper.model.n_input_channels):
                     axes[i, j].imshow(view_img[j], cmap='gray')
                     axes[i, j].imshow(heatmaps[view], cmap='jet', alpha=0.5)
-                    axes[i, j].set_title(f"{view_titles[i]} - Channel {j + 1}")
+                    axes[i, j].set_title(f"{view_titles[i]} - Channel {j + 1}", fontsize=20)
                     axes[i, j].axis('off')
 
                 # Overlay all channels
                 combined_image = np.mean(view_img.cpu().detach().numpy(), axis=0)
                 axes[i, 3].imshow(combined_image, cmap='gray')
                 axes[i, 3].imshow(heatmaps[view], cmap='jet', alpha=0.5)
-                axes[i, 3].set_title(f"{view_titles[i]} - Combined. Label: {input_label} Prediction: {round(target.item(), 2)}")
+                axes[i, 3].set_title(f"{view_titles[i]} - Combined. Label: {input_label} Prediction: {round(target.item(), 2)}", fontsize=18)
                 axes[i, 3].axis('off')
 
             if save_dir and save_output:
