@@ -107,16 +107,3 @@ class GradCamResnet(BaseXAI):
             plt.tight_layout()
             plt.show()
 
-    def generateMultipleGradCam(self, image_count=1, use_test_data=True, save_output=False, save_dir="default", externalEvalData: TensorDataset = None):
-        """
-        Generate Grad-CAM visualization for a set of images.
-        Args:
-            image_count (int): The number of images for which to generate Grad-CAM visualizations.
-        """
-        self.fileSaver.set_custom_save_dir(save_dir, save_output)
-
-        max_image_count = self.modelWrapper.dataLoader.testData.tensors[0].shape[0]
-        count = image_count if image_count <= max_image_count else max_image_count
-
-        for i in range(count):
-            self.generate_map(index=i, use_test_data=use_test_data, externalEvalData=externalEvalData)
