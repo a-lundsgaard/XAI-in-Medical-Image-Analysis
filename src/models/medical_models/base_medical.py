@@ -143,7 +143,6 @@ class BaseMedical(ABC):
                 images = batch_data["image"].to(self.device)
                 labels = torch.stack([value.float().to(self.device) for value in batch_data["label"].values()], dim=1)
                 outputs = self.model(images)
-                print("Outputs: ", outputs.shape)
                 loss = self.criterion(outputs, labels)
                 total_loss += loss.item()
                 count += 1

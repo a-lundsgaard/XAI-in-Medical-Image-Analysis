@@ -18,7 +18,7 @@ Epoch 11/150, Train Loss: 10.506854823525522, Val Loss: 9.25572833472544, R^2 Sc
 Epoch 12/150, Train Loss: 10.178002413729546, Val Loss: 8.56431615480163, R^2 Score: 0.05130738019943237
 Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_1419_height_torch.Size([4, 1, 128, 128, 54])_epoch_12_val_8.56_r2_8.56.pth
 Epoch 13/150, Train Loss: 10.051719019614476, Val Loss: 35.171225217011596, R^2 Score: -2.8992300033569336
-Epoch 14/150, Train Loss: 9.792703654270776, Val Loss: 8.624721354460931, R^2 Score: 0.044277846813201904
+Epoch 14/150, Train Loss: 9.792703654270776, Val Lo ss: 8.624721354460931, R^2 Score: 0.044277846813201904
 Epoch 15/150, Train Loss: 10.100083497040709, Val Loss: 9.546302152915043, R^2 Score: -0.056899070739746094
 Epoch 16/150, Train Loss: 9.909039968839833, Val Loss: 8.38369413565945, R^2 Score: 0.07107782363891602
 Model saved at c:\Datalogi\Bachelor\XAI-in-Medical-Image-Analysis\src\models\medical_models\saved_models\MonaiMedicalResNet_18_1419_height_torch.Size([4, 1, 128, 128, 54])_epoch_16_val_8.38_r2_8.38.pth
